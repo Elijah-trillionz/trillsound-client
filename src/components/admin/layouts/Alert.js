@@ -16,7 +16,7 @@ export const Alert = ({ msg, action, id }) => {
               action(id);
               setTimeout(() => {
                 closeAlertModal();
-              }, 1000);
+              }, 100);
             }}
           >
             Yes

@@ -1,10 +1,8 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { GlobalContext } from '../../../context/global state/GlobalState';
 
 export const Header = () => {
-  const { signedInAdmin, getSignedInAdmin } = useContext(GlobalContext);
-
-  useEffect(getSignedInAdmin, []);
+  const { signedInAdmin } = useContext(GlobalContext);
 
   const toggleProfileModal = () => {
     const modalToToggle = document.querySelector('.admin-profile-info');
@@ -46,7 +44,12 @@ export const Header = () => {
     }
   };
 
-  let admin = signedInAdmin[0];
+  const logout = () => {
+    const date = new Date(1970, 1, 0);
+    document.cookie = `_admin_token=; expires=${date.toUTCString()}`;
+  };
+
+  let admin = signedInAdmin;
 
   return (
     <header className='admin-header'>
@@ -99,30 +102,9 @@ export const Header = () => {
                         <p className='msg'>Are you sure you want to Logout?</p>
                         <div className='options'>
                           <span onClick={closeAlertModal}>No</span>
-                          <a href='/s'>Yes</a>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-
-                  <li>
-                    <i className='fas fa-trash' style={{ color: 'tomato' }}></i>
-                    {/* eslint-disable-next-line */}
-                    <a style={{ color: 'tomato' }} onClick={openAlertModal}>
-                      Delete Account
-                    </a>
-                    <div className='alert-modal-container'>
-                      <div className='alert-modal'>
-                        <p className='msg'>
-                          Are you sure you want to{' '}
-                          <span style={{ backgroundColor: 'tomato' }}>
-                            Delete this Account?
-                          </span>
-                        </p>
-                        <div className='options'>
-                          {/* eslint-disable-next-line */}
-                          <a onClick={closeAlertModal}>No</a>
-                          <a href='/s'>Yes</a>
+                          <a href='/admin' onClick={logout}>
+                            Yes
+                          </a>
                         </div>
                       </div>
                     </div>
@@ -133,7 +115,9 @@ export const Header = () => {
           </div>
         </div>
 
-        <h3>Dashboard</h3>
+        <h3>
+          <a href='/admin/songs'>Dashboard</a>
+        </h3>
       </div>
       <div className='header-contents admin-desktop-only'>
         <div className='new-post a'>

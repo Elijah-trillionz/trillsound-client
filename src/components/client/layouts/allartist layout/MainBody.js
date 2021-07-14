@@ -1,7 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { SideBar } from '../SideBar';
 import { GlobalContext } from '../../../../context/global state/GlobalState';
 import { SearchResults } from '../SearchResults';
+import { Helmet } from 'react-helmet-async';
 
 export const MainBody = () => {
   const {
@@ -12,42 +13,55 @@ export const MainBody = () => {
     newTotalPaginationIndex,
     goToNextPage,
     goToPrevPage,
+    sortArtistByTrending,
+    trendingArtists,
   } = useContext(GlobalContext);
 
-  // filter out 16 artists for each page
-  const newArtists = artists.filter((x, index) => {
-    return (
-      index + 1 <= newTotalPaginationIndex && index + 1 > currentPaginationIndex
-    );
-  });
+  useEffect(() => {
+    artists && sortArtistByTrending();
+    // eslint-disable-next-line
+  }, [artists]);
 
-  const artistElements = newArtists.map((artist) => {
+  // filter out 16 artists for each page
+  // const newArtists = artists.filter((x, index) => {
+  //   return (
+  //     index + 1 <= newTotalPaginationIndex && index + 1 > currentPaginationIndex
+  //   );
+  // });
+
+  let sortArtistIndex;
+  if (trendingArtists.length >= 1) {
+    trendingArtists.sort((a, b) => b - a);
+    sortArtistIndex = trendingArtists.map((trendingArtist) => {
+      return +trendingArtist.substr(trendingArtist.indexOf('.') + 1);
+    });
+  } else {
+    sortArtistIndex = artists.map((x, index) => {
+      return index;
+    });
+  }
+
+  const artistElements = sortArtistIndex.map((artistIndex) => {
+    const { thumbnail, id, name } = artists[artistIndex];
     return (
-      <li
-        key={artist.id}
-        className='song-container'
-        style={{ height: '425px' }}
-      >
-        {artist.thumbnail && (
-          <div
-            className='img'
-            style={{
-              backgroundImage: `url(${require(`../../../../imgs/${artist.thumbnail}`)})`,
-            }}
-          ></div>
-        )}
+      <li key={id} className='song-container'>
+        <div className='post-thumbnail'>
+          <img src={thumbnail} alt={`${name} biography`} className='img'></img>
+        </div>
         <div className='song-title'>
-          <h3 style={{ fontWeight: '600', fontSize: '25px' }}>
-            <a href={`/artist/?artistId=${artist.id}`}>{artist.name}</a>
+          <h3 style={{ fontWeight: '600' }}>
+            <a href={`/artist/?artist-id=${id}`}>{name}</a>
           </h3>
         </div>
         <div className='song-info'>
           <div className='play-song'>
-            <i className='fab fa-instagram' style={{ fontSize: '35px' }}></i>
+            <a href='/link'>
+              <i className='fab fa-instagram' style={{ fontSize: '25px' }}></i>
+            </a>
           </div>
           <div className='download-song'>
             <a href='/link'>
-              <i className='fab fa-facebook' style={{ fontSize: '35px' }}></i>
+              <i className='fab fa-facebook' style={{ fontSize: '25px' }}></i>
             </a>
           </div>
         </div>
@@ -73,15 +87,19 @@ export const MainBody = () => {
 
   return (
     <div className='main-container'>
+      <Helmet>
+        <title>Loveworld Artists - Trending Artists - TrillSound</title>
+      </Helmet>
       <div className='left-side songs'>
         {searchResults.length >= 1 ? (
           <SearchResults
             searchResults={searchResults}
             searchQuery={searchQuery}
+            src='artists'
           />
         ) : (
           <>
-            <h3 className='page-title'>All Artists</h3>
+            <h3 className='page-title'>All Artists - Trending</h3>
             <div className='pagination top'>
               <div className='pagination-s'>
                 <ul>

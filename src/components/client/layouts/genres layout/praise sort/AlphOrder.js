@@ -8,6 +8,7 @@ import { TopSlider } from '../../TopSlider';
 import { BottomSlider } from '../../BottomSlider';
 import { SortMenu } from '../../SortMenu';
 import { SearchResults } from '../../SearchResults';
+import { Helmet } from 'react-helmet-async';
 
 export const PraiseAlphOrder = () => {
   const {
@@ -23,14 +24,19 @@ export const PraiseAlphOrder = () => {
     getPraiseSongs,
     searchQuery,
     searchResults,
+    songs,
   } = useContext(GlobalContext);
 
-  const [playing, setPlaying] = useState(false);
-  const [playingSong, setPlayingSong] = useState({});
-  const [playingIndex, setPlayingIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  useEffect(getPraiseSongs, []);
-  useEffect(praiseInAlphOrder, []);
+  useEffect(() => {
+    songs && getPraiseSongs();
+    // eslint-disable-next-line
+  }, [songs]);
+  useEffect(() => {
+    praiseSongs && praiseInAlphOrder();
+    // eslint-disable-next-line
+  }, [praiseSongs]);
 
   let sortSongIndex;
   if (songTitles.length >= 1) {
@@ -67,69 +73,66 @@ export const PraiseAlphOrder = () => {
     }
   };
 
-  // play song modal
-  const openPlayModal = (index, id) => {
-    const { thumbnail, title, artist } = praiseSongs[index];
+  const toggleSongControl = (e, src) => {
+    const audio = e.target.previousElementSibling;
+    const icon = e.target;
 
-    setPlayingSong({
-      title,
-      artist,
-      thumbnail,
-    });
-    setPlaying(true);
-    setPlayingIndex(index);
+    audio.src = src;
 
-    setTimeout(() => {
-      if (
-        !document
-          .querySelector('.song-playing-modal')
-          .classList.contains('play')
-      ) {
-        document.querySelector('.song-playing-modal').classList.add('play');
+    if (!isPlaying) {
+      audio.play();
+      setIsPlaying(true);
+      icon.classList.remove('fa-play');
+      icon.classList.add('fa-spinner');
+    } else {
+      audio.pause();
+      setIsPlaying(false);
+      icon.classList.add('fa-play');
+      icon.classList.remove('fa-pause');
+      icon.classList.remove('fa-spinner');
+      undoDisabledBtns();
+    }
+  };
+
+  const disableOtherBtns = (id) => {
+    const allIcons = document.querySelectorAll('.song-control');
+
+    allIcons.forEach((icon) => {
+      if (icon.id !== id) {
+        icon.classList.add('disabled');
       }
-    }, 100);
+    });
   };
 
-  // close play modal
-  const closePlayModal = () => {
-    document.querySelector('.song-playing-modal').classList.remove('play');
-    setTimeout(() => {
-      setPlaying(false);
-      setPlayingSong({});
-    }, 300);
+  const undoDisabledBtns = () => {
+    const allIcons = document.querySelectorAll('.song-control');
+
+    allIcons.forEach((icon) => {
+      icon.classList.remove('disabled');
+    });
   };
-  const nextSong = () => {
-    let index = playingIndex;
-    console.log(playingIndex);
-    index++;
-    if (index >= praiseSongs.length) {
-      index = 0;
-    }
-    openPlayModal(index);
+
+  const songPlaying = (e) => {
+    const icon = e.target.nextElementSibling;
+
+    icon.classList.remove('fa-spinner');
+    icon.classList.add('fa-pause');
+    icon.classList.remove('fa-play');
+    disableOtherBtns(e.target.id);
   };
-  const prevSong = () => {
-    let index = playingIndex;
-    index--;
-    if (index < 0) {
-      index = praiseSongs.length - 1;
-    }
-    openPlayModal(index);
-  };
+
   const songElements = newSongIndex.map((songIndex) => {
     const { title, artist, id, thumbnail, downloadLink } = praiseSongs[
       songIndex
     ];
     return (
       <li key={id} className='song-container'>
-        <div
-          className='img'
-          style={{
-            backgroundImage: `url(${require(`../../../../../imgs/${thumbnail}`)})`,
-          }}
-        ></div>
+        <div className='post-thumbnail'>
+          <img src={thumbnail} alt='ada img' className='img'></img>
+        </div>
         <div className='song-title'>
           <h3>
-            <a href='/js'>
+            <a href={`/song?song_id=${id}&artist=${artist}`}>
               {title} - {artist}
             </a>
           </h3>
@@ -138,14 +141,25 @@ export const PraiseAlphOrder = () => {
           <div
             className='play-song'
             onClick={() => {
-              openPlayModal(songIndex, id);
               updateStreams(id);
             }}
           >
-            <i className='fas fa-play'></i>
+            <audio
+              controls={false}
+              title='Listen Online'
+              onPlaying={songPlaying}
+              id={id}
+            >
+              <source src={downloadLink} />
+            </audio>
+            <i
+              className='fas fa-play song-control'
+              id={id}
+              onClick={(e) => toggleSongControl(e, downloadLink)}
+            ></i>
           </div>
           <div className='download-song' onClick={() => updateDownloads(id)}>
-            <a href={downloadLink}>
+            <a href={downloadLink} target='_blank' rel='noopener noreferrer'>
               <i className='fas fa-download'></i>
             </a>
           </div>
@@ -156,6 +170,9 @@ export const PraiseAlphOrder = () => {
 
   return (
     <div>
+      <Helmet>
+        <title>Praise Songs - Alphabetical Order - TrillSound</title>
+      </Helmet>
       <Header />
       <MobileHeader />
       <main>
@@ -170,7 +187,7 @@ export const PraiseAlphOrder = () => {
             ) : (
               <>
                 <h3 className='page-title'>
-                  Praise Songs (Alphabetical Order)
+                  Praise Songs - Alphabetical Order
                 </h3>
                 <div className='pagination top'>
                   <div className='pagination-s'>
@@ -206,45 +223,6 @@ export const PraiseAlphOrder = () => {
           </div>
 
           <SortMenu genre={'praise'} />
-
-          {playing && (
-            <div className='song-playing-modal'>
-              <div className='song-playing-container'>
-                <div
-                  className='song-thumbnail'
-                  style={{
-                    backgroundImage: `url(${require(`../../../../../imgs/${playingSong.thumbnail}`)})`,
-                  }}
-                ></div>
-                <div className='playing-song-info'>
-                  <div className='song-controls'>
-                    <i className='fas fa-backward' onClick={prevSong}></i>
-                    <i className='fas fa-pause'></i>
-                    <i className='fas fa-forward' onClick={nextSong}></i>
-                  </div>
-                  <div className='song-progress'>
-                    <div className='progressing'>
-                      <div className='song-progress-bar'></div>
-                      <div className='false-progress-bar'></div>
-                    </div>
-                    <div className='song-timing'>
-                      <p>00:00</p>
-                      <p>03:41</p>
-                    </div>
-                  </div>
-                  <div className='song-title'>
-                    <a href='/j'>{playingSong.title}</a>
-                  </div>
-                  <div className='song-artist'>
-                    <a href='/a'>{playingSong.artist}</a>
-                  </div>
-                  <div className='cncl-btn' onClick={closePlayModal}>
-                    <i className='fas fa-times-circle'></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
         <BottomSlider />
       </main>

@@ -1,79 +1,130 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { GlobalContext } from '../../../../context/global state/GlobalState';
 import { SideBar } from '../SideBar';
 import { SearchResults } from '../SearchResults';
+import { useLocation } from 'react-router-dom';
+import marked from 'marked';
+import { Helmet } from 'react-helmet-async';
 
 export const MainBody = () => {
   const {
     songs,
     artists,
     trending,
-    previewingArtist,
-    artistToPreview,
     sortByTrending,
+    parentLoading,
+    trendingArtists,
     searchQuery,
     searchResults,
+    sortArtistByTrending,
+
+    updateArtistPageViews,
   } = useContext(GlobalContext);
+  const [trendingSongsFromArtist, setTrendingSongsFromArtist] = useState([]);
+  const [songsFromArtist, setSongsFromArtist] = useState([]);
+  const [previewingArtist, setPreviewingArtist] = useState({});
+  const [trendingArtistIndex, setTrendingArtistIndex] = useState([]);
 
   useEffect(() => {
-    artistToPreview();
-    sortByTrending();
+    songs && sortByTrending();
     // eslint-disable-next-line
-  }, []);
+  }, [songs]);
 
-  let artist, trendingFromArtist, artistSongs;
-  console.log(previewingArtist);
-  if (previewingArtist.length >= 1) {
-    artist = previewingArtist[0];
-    trending.sort((a, b) => {
-      return b - a;
-    });
-    const trendingIndexes = trending.map((song) => {
+  useEffect(() => {
+    artists && sortArtistByTrending();
+    // eslint-disable-next-line
+  }, [artists]);
+
+  const useQuery = () => {
+    return new URLSearchParams(useLocation().search);
+  };
+
+  const artistId = useQuery().get('artist-id');
+
+  useEffect(() => {
+    if (
+      !parentLoading &&
+      artists.length >= 1 &&
+      songs.length >= 1 &&
+      trending.length >= 1 &&
+      artistId
+    ) {
+      const theArtist = artists.filter((artist) => {
+        return artist.id === artistId;
+      });
+      const trendingSongs = getTrendingSongs(trending);
+      const trendingSongsFromArtist = trendingSongs.filter((trendingSong) => {
+        let artistSongs;
+        if (theArtist.length >= 1) {
+          theArtist[0].songs.forEach((songId) => {
+            if (trendingSong.id === songId) {
+              artistSongs = trendingSong.id;
+            }
+          });
+        }
+        return artistSongs;
+      });
+
+      const songsFromArtist =
+        theArtist.length >= 1 && getSongsFromArtist(theArtist[0]);
+      setSongsFromArtist(songsFromArtist);
+      setPreviewingArtist(theArtist[0]);
+      setTrendingSongsFromArtist(trendingSongsFromArtist);
+    } else {
+      setPreviewingArtist(undefined);
+    }
+    // eslint-disable-next-line
+  }, [songs, artistId, artists, trending, parentLoading]);
+
+  useEffect(() => {
+    if (artists.length >= 1 && artistId) {
+      const theArtist = artists.filter((artist) => {
+        return artist.id === artistId;
+      })[0];
+      theArtist && updateArtistPageViews(theArtist.name);
+    }
+    // eslint-disable-next-line
+  }, [artists, artistId]);
+
+  const getTrendingSongs = (trendingLogs) => {
+    trendingLogs.sort((a, b) => b - a);
+    const trendingIndexes = trendingLogs.map((song) => {
       return +song.substr(song.indexOf('.') + 1);
     });
 
-    const allTrendingSongs = trendingIndexes.map((songIndex) => {
-      return songs[songIndex];
+    const trendingSongs = trendingIndexes.map((index) => {
+      return songs[index];
     });
 
-    trendingFromArtist = allTrendingSongs.filter((song) => {
-      let theSongs;
-      if (artist.songIds.indexOf(song.id) !== -1) {
-        theSongs = song;
-      }
+    return trendingSongs;
+  };
 
-      return theSongs;
-    });
-
-    artistSongs = songs.filter((song) => {
-      let theSongs;
-      if (artist.songIds.indexOf(song.id) !== -1) {
-        theSongs = song;
-      }
-
-      return theSongs;
-    });
-  } else {
-    artist = [];
-    trendingFromArtist = [];
-    artistSongs = [];
-  }
-
-  const newTrendingPart = trendingFromArtist.filter((x, index) => {
+  const limitedTrendingSongs = trendingSongsFromArtist.filter((x, index) => {
     return index + 1 <= 4;
   });
 
-  const trendingLists = newTrendingPart.map((trending) => {
-    const { thumbnail, id, title } = trending;
+  const getSongsFromArtist = (artist) => {
+    const songsFromArtist = songs.filter((theSong) => {
+      let artistSongs;
+      artist.songs.forEach((songId) => {
+        if (theSong.id === songId) {
+          artistSongs = theSong.id;
+        }
+      });
+      return artistSongs;
+    });
+
+    return songsFromArtist;
+  };
+
+  const trendingLists = limitedTrendingSongs.map((trending) => {
+    const { thumbnail, id, title, artist } = trending;
     return (
       <li key={id}>
-        <a href='/s'>
-          <div
-            className='art-img'
-            style={{
-              backgroundImage: `url(${require(`../../../../imgs/${thumbnail}`)})`,
-            }}
-          ></div>
+        <a href={`/song?song_id=${id}&artist=${artist}`}>
+          <div className='post-thumbnail'>
+            <img src={thumbnail} alt={`${title} img`} className='art-img'></img>
+          </div>
           <h3 className='page-title art' style={{ color: 'black' }}>
             {title}
           </h3>
@@ -82,17 +133,14 @@ export const MainBody = () => {
     );
   });
 
-  const songLists = artistSongs.map((song, index) => {
-    const { title, thumbnail } = song;
+  const songLists = songsFromArtist.map((song) => {
+    const { title, thumbnail, id, artist } = song;
     return (
-      <li key={index}>
-        <a href='/s'>
-          <div
-            className='art-img'
-            style={{
-              backgroundImage: `url(${require(`../../../../imgs/${thumbnail}`)})`,
-            }}
-          ></div>
+      <li key={id}>
+        <a href={`/song?song_id=${id}&artist=${artist}`}>
+          <div className='post-thumbnail'>
+            <img src={thumbnail} alt={`${title} img`} className='art-img'></img>
+          </div>
           <h3 className='page-title art' style={{ color: 'black' }}>
             {title}
           </h3>
@@ -101,164 +149,231 @@ export const MainBody = () => {
     );
   });
 
-  // sorting related artists
-  const relatedArtists = artists.filter((artistValue) => {
-    let related;
-    if (artist.songIds) {
-      if (
-        artistValue.songIds.length === artist.songIds.length &&
-        artistValue.id !== artist.id
-      ) {
-        related = artistValue;
-      } else if (artistValue.songIds.length < artist.songIds.length) {
-        related = artistValue;
-      }
+  // // sorting related artists
+  useEffect(() => {
+    if (trendingArtists.length >= 1) {
+      trendingArtists.sort((a, b) => b - a);
+      const trendingArtistIndex = trendingArtists.map((trendingArtist) => {
+        return +trendingArtist.substr(trendingArtist.indexOf('.') + 1);
+      });
+      setTrendingArtistIndex(trendingArtistIndex);
     }
+  }, [trendingArtists]);
 
-    return related;
-  });
+  const trendingArtistsElement = trendingArtistIndex.map(
+    (trendingIndex, index) => {
+      const { id, name, thumbnail } = artists[trendingIndex];
 
-  const randomArtistsElement = relatedArtists.map((relatedArtist) => {
-    const { id, name, thumbnail } = relatedArtist;
-
-    return (
-      <a href={`/artist/?artistId=${id}`} key={id}>
-        <div className='artist-img-container'>
-          {thumbnail && (
-            <img
-              src={require(`../../../../imgs/${thumbnail}`)}
-              alt='artist img'
-            />
-          )}
-          <h3>{name}</h3>
-          <p>See more about {name}</p>
-        </div>
-      </a>
-    );
-  });
+      // eslint-disable-next-line
+      if (index > 2) return;
+      // eslint-disable-next-line
+      if (id === artistId) return;
+      return (
+        <li key={id} className='artist-img-container'>
+          <a href={`/artist/?artist-id=${id}`}>
+            <div>
+              <img src={thumbnail} alt={name} />
+              <h3>{name}</h3>
+              <p>See more about {name}</p>
+            </div>
+          </a>
+        </li>
+      );
+    }
+  );
 
   return (
     <div className='main-container'>
-      <div className='left-side artist-profile'>
-        {searchResults.length >= 1 ? (
-          <SearchResults
-            searchResults={searchResults}
-            searchQuery={searchQuery}
-          />
-        ) : (
-          <>
-            <div className='bio-container'>
-              <div>
-                <div className='artist-img-container'>
-                  {artist.thumbnail && (
-                    <img
-                      src={require(`../../../../imgs/${artist.thumbnail}`)}
-                      alt='artist img'
-                    />
-                  )}
-                  <h3>{artist.name}</h3>
-                  <p>Biography of BLW Star {artist.name}</p>
+      {previewingArtist ? (
+        <>
+          <Helmet>
+            <title>
+              Biography of {`${previewingArtist.name}`} - TrillSound
+            </title>
+          </Helmet>
+          <div className='left-side artist-profile'>
+            {searchResults.length >= 1 ? (
+              <SearchResults
+                searchResults={searchResults}
+                searchQuery={searchQuery}
+              />
+            ) : (
+              <>
+                <div className='bio-container'>
+                  <div>
+                    <div className='artist-img-container'>
+                      <img
+                        src={previewingArtist.thumbnail}
+                        alt={`${previewingArtist.name} img`}
+                      />
+                      <h3>{previewingArtist.name}</h3>
+                      <p>Biography of BLW Star {previewingArtist.name}</p>
+                    </div>
+                  </div>
+                  <div className='about-container'>
+                    <h3 className='page-title artist-title'>
+                      About {previewingArtist.name}
+                    </h3>
+                    <p
+                      dangerouslySetInnerHTML={{
+                        __html: marked(
+                          previewingArtist.bio
+                            ? previewingArtist.bio
+                            : '*loading...*'
+                        ),
+                      }}
+                    ></p>
+                  </div>
                 </div>
-              </div>
-              <div className='about-container'>
-                <h3 className='page-title artist-title'>About {artist.name}</h3>
-                <p>{artist.bio}</p>
-              </div>
-            </div>
-            <div className='artist-albums'>
-              <h3 className='page-title artist-title'>
-                Popular Songs of {artist.name}
-              </h3>
-              <div className='art-card'>
-                <ul>{trendingLists}</ul>
-              </div>
-            </div>
-            <div className='artist-songs'>
-              <h3 className='page-title artist-title'>
-                latest songs of {artist.name}
-              </h3>
-              <div className='art-card'>
-                <ul>{songLists}</ul>
-              </div>
-            </div>
-            <div className='artist-social'>
-              <h3 className='page-title artist-title half'>
-                contact testimony jaga on:
-              </h3>
-              <p>
-                {artist.facebookLink && (
-                  <b>
-                    Facebook{' '}
-                    <a href={artist.facebookLink}>
-                      @{artist.name.match(/\S+/g)}
-                    </a>
-                  </b>
-                )}
-                {artist.kingschatLink && (
-                  <b>
-                    KingsChat
-                    <a href={artist.kingschatLink}>@Testimony Jaga</a>
-                  </b>
-                )}
-                {artist.twitterLink && (
-                  <b>
-                    Twitter
-                    <a href={artist.twitterLink}>@Testimony Jaga</a>
-                  </b>
-                )}
-                {artist.instaLink && (
-                  <b>
-                    Instagram
-                    <a href={artist.instaLink}>@Testimony Jaga</a>
-                  </b>
-                )}
-                {artist.youtubeLink && (
-                  <b>
-                    YouTube
-                    <a href={artist.youtubeLink}>@Testimony Jaga</a>
-                  </b>
-                )}
-              </p>
-            </div>
+                <div className='artist-albums'>
+                  <h3 className='page-title artist-title'>
+                    Popular Songs of {previewingArtist.name}
+                  </h3>
+                  <div className='art-card'>
+                    <ul>{trendingLists}</ul>
+                  </div>
+                </div>
+                <div className='artist-songs'>
+                  <h3 className='page-title artist-title'>
+                    latest songs of {previewingArtist.name}
+                  </h3>
+                  <div className='art-card'>
+                    <ul>{songLists}</ul>
+                  </div>
+                </div>
+                <div className='artist-social'>
+                  <h3 className='page-title artist-title half'>
+                    contact testimony jaga on:
+                  </h3>
+                  <p>
+                    {previewingArtist.facebookLink && (
+                      <b>
+                        Facebook{' '}
+                        <a href={previewingArtist.facebookLink}>
+                          @{previewingArtist.name.match(/\S+/g)}
+                        </a>
+                      </b>
+                    )}
+                    {previewingArtist.kingschatLink && (
+                      <b>
+                        KingsChat
+                        <a href={previewingArtist.kingschatLink}>
+                          @Testimony Jaga
+                        </a>
+                      </b>
+                    )}
+                    {previewingArtist.twitterLink && (
+                      <b>
+                        Twitter
+                        <a href={previewingArtist.twitterLink}>
+                          @Testimony Jaga
+                        </a>
+                      </b>
+                    )}
+                    {previewingArtist.instaLink && (
+                      <b>
+                        Instagram
+                        <a href={previewingArtist.instaLink}>@Testimony Jaga</a>
+                      </b>
+                    )}
+                    {previewingArtist.youtubeLink && (
+                      <b>
+                        YouTube
+                        <a href={previewingArtist.youtubeLink}>
+                          @Testimony Jaga
+                        </a>
+                      </b>
+                    )}
+                  </p>
+                </div>
 
-            <div className='artist-tags'>
-              <span
-                className='page-title artist-title'
-                style={{ fontSize: '20px' }}
-              >
-                Tags:
-              </span>
-              <span className='text-blue'>
-                <a href='/artists'>#artist</a>
-              </span>
-              {/*<!--leads to allstar page-->*/}
-              <span className='text-blue'>
-                <a href='/alph#alph-order'>#songs</a>
-              </span>
-              {/*<!-- leads to protostar page-->*/}
-              <span className='text-blue'>
-                <a href='/'>#BLW</a>
-              </span>
-              {/*<!--leads to trending page -->*/}
-            </div>
-            <div className='related-artists'>
-              <h3 className='page-title'>
-                <a href='/artists'>
-                  Related Artists
-                  <i
-                    className='far fa-bookmark'
-                    style={{ marginLeft: '10px' }}
-                  />
-                </a>
-              </h3>
-              <div className='artist-lists'>{randomArtistsElement}</div>
-            </div>
-          </>
-        )}
-      </div>
-      <div className='right-side sidebar-container'>
-        <SideBar />
-      </div>
+                <div className='artist-tags'>
+                  <span
+                    className='page-title artist-title'
+                    style={{ fontSize: '20px' }}
+                  >
+                    Tags:
+                  </span>
+                  <span className='text-blue'>
+                    <a href='/artists'>#artist</a>
+                  </span>
+                  {/*<!--leads to allstar page-->*/}
+                  <span className='text-blue'>
+                    <a href='/alph#alph-order'>#songs</a>
+                  </span>
+                  {/*<!-- leads to protostar page-->*/}
+                  <span className='text-blue'>
+                    <a href='/'>#BLW</a>
+                  </span>
+                  {/*<!--leads to trending page -->*/}
+                </div>
+                <div className='related-artists'>
+                  <h3 className='page-title'>
+                    <a href='/artists'>
+                      Trending Artists
+                      <i
+                        className='far fa-bookmark'
+                        style={{ marginLeft: '10px' }}
+                      />
+                    </a>
+                  </h3>
+                  <div>
+                    <ul className='artist-lists'>{trendingArtistsElement}</ul>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className='right-side sidebar-container'>
+            <SideBar />
+          </div>
+        </>
+      ) : (
+        <>
+          <Helmet>
+            <title>404 Artist Not Found - TrillSound</title>
+          </Helmet>
+          <div className='left-side artist-profile'>
+            {searchResults.length >= 1 ? (
+              <SearchResults
+                searchResults={searchResults}
+                searchQuery={searchQuery}
+              />
+            ) : (
+              <>
+                {parentLoading ? (
+                  <p>loading...</p>
+                ) : (
+                  <>
+                    <div className='page-title'>
+                      This artist was not found in our database
+                    </div>
+                    <div className='related-artists'>
+                      <h3 className='page-title'>
+                        <a href='/artists'>
+                          Trending Artists
+                          <i
+                            className='far fa-bookmark'
+                            style={{ marginLeft: '10px' }}
+                          />
+                        </a>
+                      </h3>
+                      <div>
+                        <ul className='artist-lists'>
+                          {trendingArtistsElement}
+                        </ul>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          <div className='right-side sidebar-container'>
+            <SideBar />
+          </div>
+        </>
+      )}
     </div>
   );
 };

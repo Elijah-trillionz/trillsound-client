@@ -1,8 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { GlobalContext } from '../../../context/global state/GlobalState';
+import { useLocation } from 'react-router-dom';
 
 export const Header = () => {
   const { searchForQuery } = useContext(GlobalContext);
+  const location = useLocation();
 
   const [searchValue, setSearchValue] = useState('');
 
@@ -14,7 +16,16 @@ export const Header = () => {
 
   const searchQuery = (e) => {
     e.preventDefault();
-    searchForQuery(searchValue);
+
+    if (
+      location.pathname === '/artists' ||
+      location.pathname === '/artists/alph' ||
+      location.pathname === '/artists/new-uploads'
+    ) {
+      searchForQuery(searchValue, 'artist');
+    } else {
+      searchForQuery(searchValue, 'other');
+    }
   };
   return (
     <header className='desktop-header-container desktop-only'>
@@ -31,10 +42,10 @@ export const Header = () => {
             <div className='dropdown-content'>
               <ul>
                 <li>
-                  <a href='/#trending'>Trending</a>
+                  <a href='/'>Trending</a>
                 </li>
                 <li>
-                  <a href='/alph#alphabetical'>Alphabetical Order</a>
+                  <a href='/alph'>Alphabetical Order</a>
                 </li>
                 <li>
                   <a href='/new-uploads'>Recently Uploaded</a>
@@ -42,9 +53,6 @@ export const Header = () => {
               </ul>
             </div>
           </div>
-        </li>
-        <li>
-          <a href='/s'>Best Songs</a>
         </li>
         <li className='contains-dropdown'>
           <div className='dropdown'>
@@ -55,26 +63,17 @@ export const Header = () => {
             <div className='dropdown-content'>
               <ul>
                 <li>
-                  <a href='/s'>All Stars</a>
+                  <a href='/artists'>Trending</a>
                 </li>
                 <li>
-                  <a href='/s'>Proto Stars</a>
+                  <a href='/artists/alph'>Alphabetical Order</a>
                 </li>
                 <li>
-                  <a href='/s'>Zonal Level</a>
-                </li>
-                <li>
-                  <a href='/s'>Group Level</a>
-                </li>
-                <li>
-                  <a href='/s'>Church Level</a>
+                  <a href='/artists/new-uploads'>Recently Uploaded</a>
                 </li>
               </ul>
             </div>
           </div>
-        </li>
-        <li>
-          <a href='/s'>Albums</a>
         </li>
         <li className='contains-dropdown'>
           <div className='dropdown'>
@@ -92,9 +91,6 @@ export const Header = () => {
                 </li>
                 <li>
                   <a href='/genre/rap'>Rap</a>
-                </li>
-                <li>
-                  <a href='/s'>More Music</a>
                 </li>
               </ul>
             </div>

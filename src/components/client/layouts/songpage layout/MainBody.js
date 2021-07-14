@@ -2,12 +2,12 @@ import React, { useContext, useEffect, useState } from 'react';
 import { GlobalContext } from '../../../../context/global state/GlobalState';
 import { SideBar } from '../SideBar';
 import { SearchResults } from '../SearchResults';
+import { useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import marked from 'marked';
 
 export const MainBody = () => {
   const {
-    previewingSong,
-    songToPreview,
-    artistId,
     artists,
     songs,
     rapSongs,
@@ -25,80 +25,77 @@ export const MainBody = () => {
     searchResults,
     searchQuery,
     admins,
+    parentLoading,
+    getAdmins,
+    updateDownloads,
+    updateStreams,
   } = useContext(GlobalContext);
-  const [genreSongs, setGenreSongs] = useState([]);
+  const [genreTrendingSongs, setGenreTrendingSongs] = useState([]);
   const [genreTypeSongs, setGenreTypeSongs] = useState([]);
   const [genreType, setGenreType] = useState('');
-
-  useEffect(songToPreview, []);
-
-  let song, activated;
-  if (previewingSong.length >= 1) {
-    song = previewingSong[0];
-    activated = true;
-  } else {
-    song = {};
-  }
-
-  const theArtist = artists.filter((artist) => {
-    return artist.id === artistId;
-  });
-
-  const songsFromArtist = songs.filter((theSong, index) => {
-    let id;
-    if (theArtist.length >= 1) {
-      theArtist[0].songIds.forEach((songId) => {
-        if (theSong.id === songId && song.id !== songId && index + 1 <= 7)
-          id = theSong.id;
-      });
-    }
-    return id;
-  });
+  const [song, setSong] = useState({});
+  const [songsFromArtist, setSongsFromArtist] = useState([]);
+  const [admin, setAdmin] = useState({});
+  const [artistId, setArtistId] = useState('');
 
   useEffect(() => {
-    if (song.genre === 'rap') {
-      getRapSongs();
-      getTrendingRapSongs();
-      setGenreSongs(trendingRapSongs);
-      setGenreTypeSongs(rapSongs);
-      setGenreType('rap');
-    } else if (song.genre === 'praise') {
-      getPraiseSongs();
-      getTrendingPraiseSongs();
-      setGenreSongs(trendingPraiseSongs);
-      setGenreTypeSongs(praiseSongs);
-      setGenreType('praise');
-    } else if (song.genre === 'worship') {
-      getWorshipSongs();
-      getTrendingWorshipSongs();
-      setGenreSongs(trendingWorshipSongs);
-      setGenreTypeSongs(worshipSongs);
-      setGenreType('worship');
+    getAdmins();
+    // eslint-disable-next-line
+  }, []);
+
+  const useQuery = () => {
+    return new URLSearchParams(useLocation().search);
+  };
+
+  const songId = useQuery().get('song_id');
+  const artistNameAsId = useQuery().get('artist');
+
+  useEffect(() => {
+    if (!parentLoading && songId) {
+      const song = songs.filter((song) => {
+        return song.id === songId;
+      })[0];
+      setSong(song);
+    }
+  }, [songs, songId, parentLoading]);
+
+  useEffect(() => {
+    if (
+      !parentLoading &&
+      artists.length >= 1 &&
+      songs.length >= 1 &&
+      song &&
+      artistNameAsId
+    ) {
+      const theArtist = artists.filter((artist) => {
+        return artist.name.toLowerCase() === artistNameAsId.toLowerCase();
+      });
+      theArtist.length >= 1 && setArtistId(theArtist[0].id);
+      const songsFromArtist = songs.filter((theSong, index) => {
+        let artistSongs;
+        if (theArtist.length >= 1) {
+          theArtist[0].songs.forEach((songId) => {
+            if (theSong.id === songId && song.id !== songId && index + 1 <= 8) {
+              artistSongs = theSong.id;
+            }
+          });
+        }
+        return artistSongs;
+      });
+
+      setSongsFromArtist(songsFromArtist);
     }
     // eslint-disable-next-line
-  }, [activated]);
+  }, [songs, artistNameAsId, artists, song]);
 
-  const genreIndexes = genreSongs.map((genreSong) => {
-    return +genreSong.substr(genreSong.indexOf('.') + 1);
-  });
-
-  const newGenreIndexes = genreIndexes.filter((genreIndex, index) => {
-    return index + 1 <= 10;
-  });
-
-  const artistSongLists = songsFromArtist.map((value, index) => {
-    const { title, thumbnail } = value;
+  const artistSongLists = songsFromArtist.map((value) => {
+    const { title, thumbnail, id, artist } = value;
     return (
-      <li key={index}>
-        <a href='/s'>
-          {thumbnail && (
-            <div
-              className='art-img'
-              style={{
-                backgroundImage: `url(${require(`../../../../imgs/${thumbnail}`)})`,
-              }}
-            ></div>
-          )}
+      <li key={id}>
+        <a href={`/song?song_id=${id}&artist=${artist}`}>
+          <div className='post-thumbnail'>
+            <img src={thumbnail} alt={`${title} img`} className='art-img'></img>
+          </div>
           <h3 className='page-title art' style={{ color: 'black' }}>
             {title}
           </h3>
@@ -107,21 +104,75 @@ export const MainBody = () => {
     );
   });
 
-  const songLists = newGenreIndexes.map((song, index) => {
-    const { title, thumbnail, artist } = genreTypeSongs[song];
+  useEffect(() => {
+    if (song) {
+      if (song.genre === 'rap') {
+        getRapSongs();
+        setGenreType('rap');
+      } else if (song.genre === 'praise') {
+        getPraiseSongs();
+        setGenreType('praise');
+      } else if (song.genre === 'worship') {
+        getWorshipSongs();
+        setGenreType('worship');
+      }
+    }
+    // eslint-disable-next-line
+  }, [song]);
+
+  useEffect(() => {
+    if (genreType) {
+      if (genreType === 'rap' && rapSongs.length >= 1) {
+        getTrendingRapSongs();
+        setGenreTypeSongs(rapSongs);
+      } else if (genreType === 'praise' && praiseSongs.length >= 1) {
+        getTrendingPraiseSongs();
+        setGenreTypeSongs(praiseSongs);
+      } else if (genreType === 'worship' && worshipSongs.length >= 1) {
+        getTrendingWorshipSongs();
+        setGenreTypeSongs(worshipSongs);
+      }
+    }
+    // eslint-disable-next-line
+  }, [genreType]);
+
+  useEffect(() => {
+    if (genreTypeSongs.length >= 1) {
+      if (genreType === 'rap' && trendingRapSongs.length >= 1) {
+        setGenreTrendingSongs(trendingRapSongs);
+      } else if (genreType === 'praise' && trendingPraiseSongs.length >= 1) {
+        setGenreTrendingSongs(trendingPraiseSongs);
+      } else if (genreType === 'worship' && trendingWorshipSongs.length >= 1) {
+        setGenreTrendingSongs(trendingWorshipSongs);
+      }
+    }
+    // eslint-disable-next-line
+  }, [genreTypeSongs]);
+
+  genreTrendingSongs.length >= 1 && genreTrendingSongs.sort((a, b) => b - a);
+
+  const genreIndexes = genreTrendingSongs.map((genreTrendingSong) => {
+    return +genreTrendingSong.substr(genreTrendingSong.indexOf('.') + 1);
+  });
+
+  const newGenreIndexes = genreIndexes.filter((genreIndex, index) => {
+    return index + 1 <= 10;
+  });
+
+  const songLists = newGenreIndexes.map((relatedSong) => {
+    const { title, thumbnail, artist, id } = genreTypeSongs[relatedSong];
+
+    // eslint-disable-next-line
+    if (id === song.id) return;
+
     return (
-      <li key={index}>
-        <a href='/s'>
-          {thumbnail && (
-            <div
-              className='art-img'
-              style={{
-                backgroundImage: `url(${require(`../../../../imgs/${thumbnail}`)})`,
-              }}
-            ></div>
-          )}
+      <li key={id}>
+        <a href={`/song?song_id=${id}&artist=${artist}`}>
+          <div className='post-thumbnail'>
+            <img src={thumbnail} alt={`${title} img`} className='art-img'></img>
+          </div>
           <h3 className='page-title art' style={{ color: 'black' }}>
-            {title}({index + 1}) - {artist}
+            {title}- {artist}
           </h3>
         </a>
       </li>
@@ -129,118 +180,154 @@ export const MainBody = () => {
   });
 
   // find out the admin that made the post
-  const admin = admins.filter((adminValue) => {
-    let value;
-    if (song.id) {
-      if (adminValue.songsUploaded.indexOf(song.id) !== -1) value = adminValue;
+  useEffect(() => {
+    if (song && admins.length >= 1) {
+      const admin = admins.filter((admin) => {
+        return admin.username.toLowerCase() === song.admin.toLowerCase();
+      })[0];
+      setAdmin(admin);
     }
-    return value;
-  });
-  // CURRENTLY UNRESOLVABLE
-  // for (let i = 0; i < 31; i++) {
-  //   if (song.createdAt) {
-  //     if (song.createdAt.indexOf(i) !== -1) {
-  //       console.log(i);
-  //     }
-  //   }
-  // }
+  }, [song, admins]);
+
+  const emptyElementForArtist = (
+    <div className='empty-list'>
+      <p>No other songs from this artist on our playlist</p>
+    </div>
+  );
+
+  const emptyElementForSongs = (
+    <div className='empty-list'>
+      <p>No related songs</p>
+    </div>
+  );
 
   return (
     <div className='main-container'>
-      <div className='left-side artist-profile'>
-        {searchResults.length >= 1 ? (
-          <SearchResults
-            searchResults={searchResults}
-            searchQuery={searchQuery}
-          />
-        ) : (
-          <>
-            <div className='song-header'>
-              <h3
-                className='page-title'
-                style={{ textAlign: 'left', color: 'black' }}
-              >
-                Download Mp3: {song.title} by
-                <a href={`/artist/?artistId=${artistId}`}> {song.artist}</a>
-              </h3>
-              <p>
-                <span>{song.date} | </span>
-                {admin.length >= 1 && (
-                  <a href={admin[0].socialHandle}>
-                    {admin[0].username.replace(' ', '_')}
-                  </a>
-                )}
-              </p>
-            </div>
-            <div className='song-body'>
-              <div className='song-img'>
-                {song.thumbnail && (
-                  <img
-                    src={require(`../../../../imgs/${song.thumbnail}`)}
-                    alt='song-img'
-                  />
-                )}
-                <div className='song-writeup'>
-                  <p>{song.description}</p>
+      {song && (
+        <>
+          <Helmet>
+            <title>
+              Download MP3: {`${song.title} by ${song.artist}`} - TrillSound
+            </title>
+          </Helmet>
+          <div className='left-side artist-profile'>
+            {searchResults.length >= 1 ? (
+              <SearchResults
+                searchResults={searchResults}
+                searchQuery={searchQuery}
+              />
+            ) : (
+              <>
+                <div className='song-header'>
+                  <h3
+                    className='page-title'
+                    style={{ textAlign: 'left', color: 'black' }}
+                  >
+                    Download Mp3: {song.title} by{' '}
+                    <a href={`/artist/?artist-id=${artistId}`}>{song.artist}</a>
+                  </h3>
+                  <p>
+                    <span>{song.createdAt} | </span>
+                    <i
+                      className='fas fa-user'
+                      style={{ color: '#444', fontSize: '10px' }}
+                    ></i>{' '}
+                    {admin && (
+                      <a href={admin.socialHandle} target='_black'>
+                        {admin.username}
+                      </a>
+                    )}
+                  </p>
                 </div>
-              </div>
+                <div className='song-body'>
+                  <div className='song-img'>
+                    <img src={song.thumbnail} alt={song.title} />
+                    <div className='song-writeup'>
+                      <p
+                        dangerouslySetInnerHTML={{
+                          __html: marked(
+                            song.description ? song.description : '*loading...*'
+                          ),
+                        }}
+                      ></p>
+                    </div>
+                  </div>
 
-              <div className='song-action'>
-                <div className='play'>
-                  {/* deal with how to play it later. */}
-                  <audio controls={true} title='Listen Online'></audio>
+                  <div className='song-action'>
+                    <div
+                      className='play'
+                      onClick={() => updateStreams(song.id)}
+                    >
+                      <audio controls={true} title='Listen Online'>
+                        <source src={song.playLink} />
+                      </audio>
+                    </div>
+                    <div
+                      className='download'
+                      onClick={() => updateDownloads(song.id)}
+                    >
+                      <a href={song.downloadLink} title='Download mp3'>
+                        Download Here
+                      </a>
+                    </div>
+                  </div>
+                  <div className='artist-tags'>
+                    <span
+                      className='page-title artist-title'
+                      style={{ fontSize: '20px' }}
+                    >
+                      Tags:
+                    </span>
+                    <span className='text-blue'>
+                      <a href='/artists'>#artist</a>
+                    </span>
+                    {/*<!--leads to allstar page-->*/}
+                    <span className='text-blue'>
+                      <a href={`/artist/?artist-id=${artistId}`}>
+                        #{song.artist && song.artist.match(/\S+/g)}
+                      </a>
+                    </span>
+                    {/*<!-- leads to album page -->*/}
+                    <span className='text-blue'>
+                      <a href={`/genre/${genreType}`}>#{genreType}</a>
+                    </span>
+                    {/*<!-- leads to protostar page-->*/}
+                    <span className='text-blue'>
+                      <a href='/'>#BLW</a>
+                    </span>
+                    {/*<!--leads to trending page -->*/}
+                  </div>
                 </div>
-                <div className='download'>
-                  <a href={song.downloadLink} title='Download mp3'>
-                    Download Here
-                  </a>
+                <div className='artist-songs'>
+                  <h3 className='page-title artist-title'>
+                    more from this artist
+                  </h3>
+                  <div className='art-card'>
+                    {songsFromArtist.length >= 1 ? (
+                      <ul>{artistSongLists}</ul>
+                    ) : (
+                      emptyElementForArtist
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className='artist-tags'>
-                <span
-                  className='page-title artist-title'
-                  style={{ fontSize: '20px' }}
-                >
-                  Tags:
-                </span>
-                <span className='text-blue'>
-                  <a href='/artists'>#artist</a>
-                </span>
-                {/*<!--leads to allstar page-->*/}
-                <span className='text-blue'>
-                  <a href={`/artist/?artistId=${artistId}`}>
-                    #{song.artist && song.artist.match(/\S+/g)}
-                  </a>
-                </span>
-                {/*<!-- leads to album page -->*/}
-                <span className='text-blue'>
-                  <a href={`/genre/${genreType}`}>#{genreType}</a>
-                </span>
-                {/*<!-- leads to protostar page-->*/}
-                <span className='text-blue'>
-                  <a href='/'>#BLW</a>
-                </span>
-                {/*<!--leads to trending page -->*/}
-              </div>
-            </div>
-            <div className='artist-songs'>
-              <h3 className='page-title artist-title'>more from this artist</h3>
-              <div className='art-card'>
-                <ul>{artistSongLists}</ul>
-              </div>
-            </div>
-            <div className='related-songs'>
-              <h3 className='page-title artist-title'>Related songs</h3>
-              <div className='art-card'>
-                <ul>{songLists}</ul>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-      <div className='right-side sidebar-container'>
-        <SideBar />
-      </div>
+                <div className='related-songs'>
+                  <h3 className='page-title artist-title'>Related songs</h3>
+                  <div className='art-card'>
+                    {newGenreIndexes.length >= 1 ? (
+                      <ul>{songLists}</ul>
+                    ) : (
+                      emptyElementForSongs
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <div className='right-side sidebar-container'>
+            <SideBar />
+          </div>
+        </>
+      )}
     </div>
   );
 };

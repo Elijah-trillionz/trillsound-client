@@ -33,19 +33,16 @@ export const SideNav = () => {
           <div className='accordion-content'>
             <ul>
               <li>
-                <a href='/#trending'>Trending</a>
+                <a href='/'>Trending</a>
               </li>
               <li>
-                <a href='/alph#alphabetical'>Alphabetical Order</a>
+                <a href='/alph'>Alphabetical Order</a>
               </li>
               <li>
                 <a href='/new-uploads'>Recently Uploaded</a>
               </li>
             </ul>
           </div>
-        </li>
-        <li>
-          <a href='/s'>Best Songs</a>
         </li>
         <li className='contains-accordion'>
           <div className='accordion'>
@@ -57,25 +54,16 @@ export const SideNav = () => {
           <div className='accordion-content'>
             <ul>
               <li>
-                <a href='/s'>All Stars</a>
+                <a href='/artists/'>Trending</a>
               </li>
               <li>
-                <a href='/s'>Proto Stars</a>
+                <a href='/artists/alph'>Alphabetical Order</a>
               </li>
               <li>
-                <a href='/s'>Zonal Level</a>
-              </li>
-              <li>
-                <a href='/s'>Group Level</a>
-              </li>
-              <li>
-                <a href='/s'>Church Level</a>
+                <a href='/artists/new-uploads'>Recently Uploaded</a>
               </li>
             </ul>
           </div>
-        </li>
-        <li>
-          <a href='/s'>Albums</a>
         </li>
         <li className='contains-accordion'>
           <div className='accordion'>
@@ -94,9 +82,6 @@ export const SideNav = () => {
               </li>
               <li>
                 <a href='/genre/rap'>Rap</a>
-              </li>
-              <li>
-                <a href='/s'>More Music</a>
               </li>
             </ul>
           </div>

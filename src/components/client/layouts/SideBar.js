@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { GlobalContext } from '../../../context/global state/GlobalState';
 
 export const SideBar = () => {
@@ -18,9 +18,24 @@ export const SideBar = () => {
     trendingLastMonth,
     // loading,
   } = useContext(GlobalContext);
-  const [hasAds, setHasAds] = useState(false);
+  // const [hasAds, setHasAds] = useState(false);
 
   const allMonths = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  const monthDisplay = [
     'January',
     'February',
     'March',
@@ -37,18 +52,21 @@ export const SideBar = () => {
 
   const month = new Date().getMonth();
   const lastMonth = month === 0 ? allMonths[11] : allMonths[month - 1];
+  const displayMonth = month === 0 ? monthDisplay[11] : monthDisplay[month - 1];
 
   useEffect(() => {
-    getWorshipSongs();
-    getTrendingWorshipSongs();
-    getRapSongs();
-    getTrendingRapSongs();
-    getSongsFromLastMonth(lastMonth);
-    getTrendingLastMonth();
+    if (songs) {
+      getWorshipSongs();
+      getTrendingWorshipSongs();
+      getRapSongs();
+      getTrendingRapSongs();
+      getSongsFromLastMonth(lastMonth);
+      getTrendingLastMonth();
+    }
     // eslint-disable-next-line
-  }, []);
+  }, [songs]);
 
-  const adsList = ['ada.jpg', 'ads-1.jpeg', 'ads-2.jpg', 'ads-3.jpg'];
+  const adsList = ['ada.jpg'];
 
   const songsMax = songs.filter((song, index) => {
     return index + 1 <= 5;
@@ -59,7 +77,7 @@ export const SideBar = () => {
     return (
       <li key={id}>
         {/* use the link params to determine the song to load on the song page using your server */}
-        <a href={`/song/?songId=${id}`}>
+        <a href={`/song/?song_id=${id}&artist=${artist}`}>
           {title} - {artist}
         </a>
       </li>
@@ -93,7 +111,7 @@ export const SideBar = () => {
     return (
       <li key={id}>
         {/* use the link params to determine the song to load on the song page using your server */}
-        <a href={`/song/?songId=${id}`}>
+        <a href={`/song/?song_id=${id}&artist=${artist}`}>
           {title} - {artist}
         </a>
       </li>
@@ -123,7 +141,7 @@ export const SideBar = () => {
     return (
       <li key={id}>
         {/* use the link params to determine the song to load on the song page using your server */}
-        <a href={`/song/?songId=${id}`}>
+        <a href={`/song/?song_id=${id}&artist=${artist}`}>
           {title} - {artist}
         </a>
       </li>
@@ -153,46 +171,22 @@ export const SideBar = () => {
     return (
       <li key={id}>
         {/* use the link params to determine the song to load on the song page using your server */}
-        <a href={`/song/?songId=${id}`}>
+        <a href={`/song/?song_id=${id}&artist=${artist}`}>
           {index + 1}. {title} - {artist}
         </a>
       </li>
     );
   });
 
-  let link = '/make_ads',
-    slidingIndex = adsList.length;
+  let link = '/make_ads';
 
-  const ads = adsList.map((ad, index) => {
+  const adsElement = adsList.map((ad, index) => {
     return (
-      <li key={index} className='ad'>
+      <li key={index}>
         <img src={require(`../../../imgs/${ad}`)} alt={`ads- ${index + 1}`} />
       </li>
     );
   });
-
-  const slideAds = () => {
-    slidingIndex--;
-    if (slidingIndex < 0) {
-      slidingIndex = adsList.length - 1;
-    }
-    const ads = document.querySelectorAll('.ad');
-    ads.forEach((ad) => {
-      ad.classList.remove('slide');
-    });
-    ads[slidingIndex].classList.add('slide');
-    setTimeout(slideAds, 5000);
-  };
-
-  useEffect(() => {
-    if (adsList) {
-      setTimeout(() => {
-        setHasAds(true);
-        slideAds();
-      }, 3000);
-    }
-    // eslint-disable-next-line
-  }, []);
 
   return (
     <div className='categories'>
@@ -220,38 +214,26 @@ export const SideBar = () => {
         </ul>
       </div>
       <a href={link}>
-        <div
-          className='pro-ads'
-          style={{
-            backgroundColor: `${hasAds ? 'transparent' : 'rgb(1, 10, 27)'}`,
-          }}
-        >
-          {!hasAds && <p>Advertise here</p>}
-          {hasAds && (
-            <div className='ads-slider'>
-              <ul>{ads}</ul>
-            </div>
-          )}
+        <div className='pro-ads'>
+          <div className='single-ad'>
+            <ul>{adsElement}</ul>
+          </div>
         </div>
       </a>
       <a href={link}>
         <div
           className='pro-ads'
           style={{
-            backgroundColor: `${hasAds ? 'transparent' : 'rgb(1, 10, 27)'}`,
             marginBottom: '10px',
           }}
         >
-          {!hasAds && <p>Advertise here</p>}
-          {hasAds && (
-            <div className='single-ad'>
-              <img src={require('../../../imgs/cso.jpg')} alt='ad' />
-            </div>
-          )}
+          <div className='single-ad'>
+            <img src={require('../../../imgs/cso.jpg')} alt='ad' />
+          </div>
         </div>
       </a>
       <div className='trill-chart cat-list'>
-        <h3 className='category-title'>{lastMonth} Top Five</h3>
+        <h3 className='category-title'>{displayMonth} Top Five</h3>
         <ul>
           {/* search list of songs for this song and display it */}
           {trendingLastMonthElement}

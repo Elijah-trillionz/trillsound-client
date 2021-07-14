@@ -1,9 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { SideNav } from './SideNav';
 import { GlobalContext } from '../../../context/global state/GlobalState';
+import { useLocation } from 'react-router-dom';
 
 export const MobileHeader = () => {
   const { searchForQuery } = useContext(GlobalContext);
+  const location = useLocation();
 
   const [searchValue, setSearchValue] = useState('');
 
@@ -15,7 +17,16 @@ export const MobileHeader = () => {
 
   const searchQuery = (e) => {
     e.preventDefault();
-    searchForQuery(searchValue);
+
+    if (
+      location.pathname === '/artists' ||
+      location.pathname === '/artists/alph' ||
+      location.pathname === '/artists/new-uploads'
+    ) {
+      searchForQuery(searchValue, 'artist');
+    } else {
+      searchForQuery(searchValue, 'other');
+    }
   };
 
   // toggle hamburger

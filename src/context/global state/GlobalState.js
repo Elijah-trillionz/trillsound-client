@@ -1,11 +1,15 @@
-import React, { createContext, useReducer } from 'react';
+import React, { createContext, useEffect, useReducer } from 'react';
 import AppReducer from '../app reducers/AppReducer';
 import {
+  GET_SONGS,
+  GET_ARTISTS,
+  GET_ADMINS,
   ALPH_ORDER,
   TRENDING,
   PREV_PAGE,
   NEXT_PAGE,
   SET_LOADING,
+  SET_PARENT_LOADING,
   GET_WORSHIP_SONGS,
   GET_TRENDING_WORSHIP,
   GET_RAP_SONGS,
@@ -22,106 +26,13 @@ import {
   ARTIST_TO_PREVIEW,
   SIGNED_IN_ADMIN,
   SET_ERROR_MESSAGE,
+  SET_SUCCESS_MESSAGE,
+  TRENDING_ARTIST,
+  ARTIST_ALPH_ORDER,
 } from '../app reducers/types';
 
 const initialState = {
-  songs: [
-    {
-      id: 10, // from server
-      title: 'Mma Mma 1',
-      artist: 'Frank Edwards',
-      thumbnail: 'ads-2.jpg',
-      downloadLink: '/link/frank',
-      numOfDownloads: 14, // from server
-      numOfStreams: 200, // from server
-      genre: 'praise',
-      createdAt: 'August 27, 2020 at 12:41:24 AM UTC+1', // from server; firebase
-      description: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-      officiis quos sit impedit libero ea consequuntur veritatis placeat
-      optio, illo qui? Assumenda, explicabo. Vitae reiciendis numquam
-      repudiandae doloribus assumenda, vero perspiciatis iusto eveniet
-      rem sunt repellendus provident nemo, sapiente dolorem sint,
-      inventore vel eum hic voluptates commodi obcaecati officiis porro
-      nulla.`,
-      date: 'January 6, 2021', // from server
-    },
-    {
-      id: 20,
-      title: 'Jesus 1',
-      artist: 'Testimony Jaga',
-      thumbnail: 'ads-1.jpeg',
-      downloadLink: '/link/jaga',
-      numOfDownloads: 98,
-      numOfStreams: 61,
-      genre: 'worship',
-      createdAt: 'August 27, 2020 at 12:41:24 AM UTC+1',
-      description: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-      officiis quos sit impedit libero ea consequuntur veritatis placeat
-      optio, illo qui? Assumenda, explicabo. Vitae reiciendis numquam
-      repudiandae doloribus assumenda, vero perspiciatis iusto eveniet
-      rem sunt repellendus provident nemo, sapiente dolorem sint,
-      inventore vel eum hic voluptates commodi obcaecati officiis porro
-      nulla.`,
-      date: 'January 6, 2021',
-    },
-    {
-      id: 30,
-      title: 'Fix My Eyes ft Sinach 1',
-      artist: 'Ada',
-      thumbnail: 'ada.jpg',
-      downloadLink: '/link/ada',
-      numOfDownloads: 190,
-      numOfStreams: 40,
-      genre: 'worship',
-      createdAt: 'January 27, 2020 at 12:41:24 AM UTC+1',
-      description: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-      officiis quos sit impedit libero ea consequuntur veritatis placeat
-      optio, illo qui? Assumenda, explicabo. Vitae reiciendis numquam
-      repudiandae doloribus assumenda, vero perspiciatis iusto eveniet
-      rem sunt repellendus provident nemo, sapiente dolorem sint,
-      inventore vel eum hic voluptates commodi obcaecati officiis porro
-      nulla.`,
-      date: 'January 6, 2021',
-    },
-    {
-      id: 40,
-      title: "What's up? Jesus 1",
-      artist: 'Rap Nation',
-      thumbnail: 'ads-3.jpg',
-      downloadLink: '/link/ada',
-      numOfDownloads: 1090,
-      numOfStreams: 40,
-      genre: 'rap',
-      createdAt: 'August 27, 2020 at 12:41:24 AM UTC+1',
-      description: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-      officiis quos sit impedit libero ea consequuntur veritatis placeat
-      optio, illo qui? Assumenda, explicabo. Vitae reiciendis numquam
-      repudiandae doloribus assumenda, vero perspiciatis iusto eveniet
-      rem sunt repellendus provident nemo, sapiente dolorem sint,
-      inventore vel eum hic voluptates commodi obcaecati officiis porro
-      nulla.`,
-      date: 'January 6, 2021',
-    },
-    {
-      id: 50,
-      title: 'My Saviour 1',
-      artist: 'KinGZkid',
-      thumbnail: 'avatar.png',
-      downloadLink: '/link/ada',
-      numOfDownloads: 19000,
-      numOfStreams: 4000,
-      genre: 'rap',
-      createdAt: 'December 27, 2020 at 12:41:24 AM UTC+1',
-      description: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-      officiis quos sit impedit libero ea consequuntur veritatis placeat
-      optio, illo qui? Assumenda, explicabo. Vitae reiciendis numquam
-      repudiandae doloribus assumenda, vero perspiciatis iusto eveniet
-      rem sunt repellendus provident nemo, sapiente dolorem sint,
-      inventore vel eum hic voluptates commodi obcaecati officiis porro
-      nulla.`,
-      date: 'December 6, 2021',
-    },
-  ],
+  songs: [],
   songTitles: [],
   trending: [],
   worshipSongs: [],
@@ -134,76 +45,24 @@ const initialState = {
   trendingLastMonth: [],
   previewingSong: [],
   artistId: '',
-  artists: [
-    {
-      id: 10, // from server
-      name: 'Ada',
-      thumbnail: 'ada.jpg',
-      songIds: [20], // from server
-      bio: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-    officiis quos sit impedit libero ea consequuntur veritatis placeat
-    optio, illo qui? Assumenda, explicabo.`,
-      facebookLink: 'https://facebook.com',
-      instaLink: 'https://instagram.com',
-      youtubeLink: 'https://youtube.com',
-      date: 'December 14, 2020',
-    },
-    {
-      id: 20,
-      name: 'Testimony Jaga',
-      thumbnail: 'ads-3.jpg',
-      songIds: [50, 20, 30],
-      bio: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-      officiis quos sit impedit libero ea consequuntur veritatis placeat
-      optio, illo qui? Assumenda, explicabo.`,
-      facebookLink: 'https://facebook.com',
-      instaLink: 'https://instagram.com',
-      twitterLink: 'https://twitter.com',
-      kingschatLink: 'https://kingschat.com',
-      date: 'January 14, 2021',
-    },
-    {
-      id: 30,
-      name: 'CSO',
-      thumbnail: 'cso.jpg',
-      songIds: [10, 40, 30],
-      bio: `Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor
-    officiis quos sit impedit libero ea consequuntur veritatis placeat
-    optio, illo qui? Assumenda, explicabo.`,
-      instaLink: 'https://instagram.com',
-      youtubeLink: 'https://youtube.com',
-      twitterLink: 'https://twitter.com',
-      kingschatLink: 'https://kingschat.com',
-      date: 'December 11, 2020',
-    },
-  ],
+  artists: [],
   loading: false,
+  parentLoading: true,
   currentPaginationIndex: 0,
   newTotalPaginationIndex: 16,
   searchResults: [],
   searchQuery: '',
   previewingArtist: [],
-  admins: [
-    {
-      id: 10,
-      username: 'Elijah Trillionz',
-      zone: 'CE Mid-West Zone',
-      songsUploaded: [10, 20, 30, 40],
-      artistsUploaded: [10, 20],
-      socialHandle: 'https://twitter/elijahtrillionz',
-    },
-    {
-      id: 20,
-      username: 'John Doe',
-      zone: 'CE Lagos Zone 2',
-      songsUploaded: [50],
-      artistsUploaded: [30],
-      socialHandle: 'https://twitter/john_doe',
-    },
-  ],
-  signedInAdmin: [],
-  errorMessage: '',
+  trendingArtists: [],
+  artistTitles: [],
+  admins: [],
+  signedInAdmin: {},
+  errorMessage: false,
+  successMessage: false,
 };
+
+// link to download songs https://drive.google.com/uc?export=download&id=
+// link to view images https://drive.google.com/uc?export=view&id=
 
 // whenever a song is uploaded, the arist is searched for in the database and is attributed as the owner of that song by adding the song id in the songIds of the artist
 
@@ -213,8 +72,174 @@ export const GlobalContext = createContext(initialState);
 // create provider component
 export const GlobalProvider = ({ children }) => {
   const [state, dispatch] = useReducer(AppReducer, initialState);
+  // only works on development
+  const proxy = 'http://localhost:8000';
 
   // actions
+  const getSongs = async () => {
+    setParentLoading(true);
+    try {
+      const penRes = await fetch(proxy + '/api/songs', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setParentLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          const songIndexes = [];
+          data.songs.forEach((song, index) => {
+            // generate image view link
+            song.thumbnail = `https://webdeverguide.com/wp-content/uploads${song.thumbnail}`;
+            song.playLink = `https://webdeverguide.com/wp-content/uploads/2021/06/Amaghimo-Password-teevolight.epizy_.com_.m4a`;
+            song.downloadLink = `https://webdeverguide.com/wp-content/uploads${song.downloadLink}`;
+
+            song.artist = `${song.artist
+              .substr(0, 1)
+              .toUpperCase()}${song.artist.substr(1)}`;
+
+            songIndexes.push(`${song.index}.${index}`);
+          });
+
+          songIndexes.sort((a, b) => {
+            return b - a; // ascending
+          });
+
+          const sortSongIndexes = songIndexes.map((songIndex) => {
+            return +songIndex.substr(songIndex.indexOf('.') + 1);
+          });
+
+          const songs = [];
+          sortSongIndexes.forEach((sortSongIndex) => {
+            songs.push(data.songs[sortSongIndex]);
+          });
+
+          dispatch({
+            type: GET_SONGS,
+            payload: songs,
+          });
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setParentLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
+  };
+
+  const getArtists = async () => {
+    setParentLoading(true);
+    try {
+      const penRes = await fetch(proxy + '/api/bios', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setParentLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          const artistPageViews = [];
+          data.artists.forEach((artist, index) => {
+            // generate image view link
+            artist.thumbnail = `https://drive.google.com/uc?export=view&id=${artist.thumbnail}`;
+            artist.name = `${artist.name
+              .substr(0, 1)
+              .toUpperCase()}${artist.name.substr(1)}`;
+
+            artistPageViews.push(`${artist.index}.${index}`); // trending
+          });
+
+          artistPageViews.sort((a, b) => {
+            return b - a;
+          });
+
+          const sortArtistPageViews = artistPageViews.map((artistPageView) => {
+            return +artistPageView.substr(artistPageView.indexOf('.') + 1);
+          });
+
+          const artists = [];
+          sortArtistPageViews.forEach((sortArtistPageView) => {
+            artists.push(data.artists[sortArtistPageView]);
+          });
+
+          dispatch({
+            type: GET_ARTISTS,
+            payload: artists,
+          });
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setParentLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
+  };
+
+  const getAdmins = async () => {
+    setParentLoading(true);
+    try {
+      const penRes = await fetch(proxy + '/api/admins', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setParentLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          dispatch({
+            type: GET_ADMINS,
+            payload: data.admins,
+          });
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setParentLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
+  };
+
+  // TODO: sort artists (alphabetically, popular [num of page views], recently uploaded)
+
+  useEffect(() => {
+    getSongs();
+    getArtists();
+    // eslint-disable-next-line
+  }, []);
+
   const sortAlphabetically = () => {
     dispatch({
       type: ALPH_ORDER,
@@ -224,6 +249,18 @@ export const GlobalProvider = ({ children }) => {
   const sortByTrending = () => {
     dispatch({
       type: TRENDING,
+    });
+  };
+
+  const sortArtistAlphabetically = () => {
+    dispatch({
+      type: ARTIST_ALPH_ORDER,
+    });
+  };
+
+  const sortArtistByTrending = () => {
+    dispatch({
+      type: TRENDING_ARTIST,
     });
   };
 
@@ -252,14 +289,57 @@ export const GlobalProvider = ({ children }) => {
     // }, 1000);
   };
 
-  const updateStreams = (id) => {
-    // update with this id on the database
-    console.log(`updated no of streams for id: ${id}`);
+  const adminTag = localStorage.getItem('admin-tag');
+
+  const updateStreams = async (id) => {
+    setParentLoading(true);
+    try {
+      await fetch(proxy + `/api/streams/update/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-tag': adminTag,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
   };
 
-  const updateDownloads = (id) => {
-    // update with this id on the database
-    console.log(`updated no of downloads for id: ${id}`);
+  const updateDownloads = async (id) => {
+    setParentLoading(true);
+    try {
+      await fetch(proxy + `/api/downloads/update/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-tag': adminTag,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
+  };
+
+  const updateArtistPageViews = async (id) => {
+    setParentLoading(true);
+    try {
+      await fetch(proxy + `/api/artists/update/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-tag': adminTag,
+        },
+      });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
   };
 
   const getWorshipSongs = () => {
@@ -326,11 +406,11 @@ export const GlobalProvider = ({ children }) => {
   };
 
   // search for query
-  const searchForQuery = (query) => {
+  const searchForQuery = (query, src) => {
     setLoading();
     dispatch({
       type: SEARCH_QUERY,
-      payload: query,
+      payload: {query, src},
     });
   };
 
@@ -369,63 +449,399 @@ export const GlobalProvider = ({ children }) => {
     });
   };
 
-  // actions for admins of the website
-  const signIn = (username, password) => {
-    // send log in info to database
-    console.log(username, password);
-  };
+  const getDataFromCookie = (data) => {
+    const allCookies = document.cookie.split(';');
 
-  const getSignedInAdmin = () => {
-    // id is to be set on the headers when an admin signs in by the server
-    const id = 30;
-    dispatch({
-      type: SIGNED_IN_ADMIN,
-      payload: id,
+    const cookie = allCookies.filter((cookie) => {
+      return cookie.indexOf(data) !== -1;
     });
+
+    return cookie.length >= 1 && cookie[0].trim().split('=')[1];
+  };
+  const adminToken = getDataFromCookie('_admin_token');
+
+  const signIn = async (username, password) => {
+    setLoading(true);
+    const data = { username, password };
+    try {
+      const penRes = await fetch(proxy + '/api/admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      return penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          // set admin token in cookie
+          const date = new Date();
+          date.setTime(date.getTime() + 24 * 60 * 60 * 1000); // expires in 24hrs
+          document.cookie = `_admin_token=${
+            data.token
+          }; expires=${date.toUTCString()}`;
+
+          // set admin tag in localstorage
+          localStorage.setItem('admin-tag', JSON.stringify(true));
+          getSignedInAdmin(data.token);
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setLoading(false);
   };
 
-  const uploadSong = (song) => {
-    // send to database
-    console.log('song uploaded');
-  };
-  const updateSong = (id, song) => {
-    // send to database
-    console.log(`song updated for id ${id}`);
-  };
-  const deleteSong = (id) => {
-    // send to database
-    console.log(`song (${id}) deleted`);
+  // register a user
+  const register = async (
+    username,
+    password,
+    zone,
+    socialHandle,
+    adminAuth
+  ) => {
+    setLoading(true);
+    const data = { username, password, zone, socialHandle, adminAuth };
+    try {
+      const penRes = await fetch(proxy + '/api/admin/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          setSuccessMessage(data.msg);
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setLoading(false);
   };
 
-  const uploadArtist = (artist) => {
-    // send to database
-    console.log('artist uploaded');
-  };
-  const updateArtist = (id, artist) => {
-    // send to database
-    console.log(`artist updated for id ${id}`);
-  };
-  const deleteArtist = (id) => {
-    // send to database
-    console.log(`artist (${id}) delete`);
+  const getSignedInAdmin = async (token) => {
+    setParentLoading(true);
+    try {
+      const penRes = await fetch(proxy + '/api/admin', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-token': token,
+        },
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setParentLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          dispatch({
+            type: SIGNED_IN_ADMIN,
+            payload: data.admin,
+          });
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setParentLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
   };
 
-  const changePassword = (newPassword) => {
-    // send to new and old password
-    console.log(newPassword);
+  useEffect(() => {
+    if (adminToken) getSignedInAdmin(adminToken);
+    else setErrorMessage('Not authenticated');
+    // eslint-disable-next-line
+  }, []);
+
+  const changePassword = async (oldPassword, newPassword) => {
+    setLoading(true);
+    try {
+      const pendingResponse = await fetch(
+        proxy + `/api/admin/change-password`,
+        {
+          method: 'PUT',
+          body: JSON.stringify({ oldPassword, newPassword }),
+          headers: {
+            'Content-Type': 'application/json',
+            'admin-token': adminToken,
+          },
+        }
+      );
+
+      pendingResponse.json().then((data) => {
+        if (data.errorMsg) {
+          setLoading(false);
+          return setErrorMessage(data.errorMsg);
+        }
+
+        setSuccessMessage(data.msg);
+        setErrorMessage(false);
+      });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setLoading(false);
+  };
+
+  const uploadSong = async (song) => {
+    setLoading(true);
+    try {
+      const penRes = await fetch(proxy + '/api/admin/songs/new', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-token': adminToken,
+        },
+        body: JSON.stringify(song),
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          setSuccessMessage(data.msg);
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setLoading(false);
+  };
+
+  const updateSong = async (id, song) => {
+    setLoading(true);
+    try {
+      const penRes = await fetch(proxy + `/api/admin/songs/update/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-token': adminToken,
+        },
+        body: JSON.stringify(song),
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          setSuccessMessage(data.msg);
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setLoading(false);
+  };
+
+  const deleteSong = async (id) => {
+    setParentLoading(true);
+    try {
+      const penRes = await fetch(proxy + `/api/admin/songs/delete/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-token': adminToken,
+        },
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setParentLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          // getSongs();
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setParentLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
+  };
+
+  const uploadArtist = async (artist) => {
+    setLoading(true);
+    try {
+      const penRes = await fetch(proxy + '/api/admin/bios/new', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-token': adminToken,
+        },
+        body: JSON.stringify(artist),
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          setSuccessMessage(data.msg);
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setLoading(false);
+  };
+
+  const updateArtist = async (artist) => {
+    setLoading(true);
+    try {
+      const penRes = await fetch(proxy + `/api/admin/bios/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-token': adminToken,
+        },
+        body: JSON.stringify(artist),
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          setSuccessMessage(data.msg);
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setLoading(false);
+  };
+
+  const deleteArtist = async (name) => {
+    setParentLoading(true);
+    try {
+      const penRes = await fetch(proxy + `/api/admin/bios/delete/${name}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-token': adminToken,
+        },
+      });
+
+      penRes
+        .json()
+        .then((data) => {
+          if (data.errorMsg) {
+            setParentLoading(false);
+            return setErrorMessage(data.errorMsg);
+          }
+
+          setErrorMessage(false);
+        })
+        .catch((err) => {
+          setParentLoading(false);
+          return setErrorMessage(err.errorMsg);
+        });
+    } catch (err) {
+      console.log(err);
+      setErrorMessage(err);
+    }
+    setParentLoading(false);
   };
 
   // global
   // set loading
-  const setLoading = () => {
+  const setLoading = (bool) => {
     dispatch({
       type: SET_LOADING,
+      payload: bool,
+    });
+  };
+  const setParentLoading = (bool) => {
+    dispatch({
+      type: SET_PARENT_LOADING,
+      payload: bool,
     });
   };
   const setErrorMessage = (err) => {
     dispatch({
       type: SET_ERROR_MESSAGE,
       payload: err,
+    });
+  };
+  const setSuccessMessage = (msg) => {
+    dispatch({
+      type: SET_SUCCESS_MESSAGE,
+      payload: msg,
     });
   };
 
@@ -451,18 +867,24 @@ export const GlobalProvider = ({ children }) => {
         previewingSong: state.previewingSong,
         artistId: state.artistId,
         previewingArtist: state.previewingArtist,
+        trendingArtists: state.trendingArtists,
+        artistTitles: state.artistTitles,
         // admins
         admins: state.admins,
         signedInAdmin: state.signedInAdmin,
         // globals
         errorMessage: state.errorMessage,
+        successMessage: state.successMessage,
         loading: state.loading,
+        parentLoading: state.parentLoading,
+        getAdmins,
         goToNextPage,
         goToPrevPage,
         sortByTrending,
         sortAlphabetically,
         updateDownloads,
         updateStreams,
+        updateArtistPageViews,
         getTrendingWorshipSongs,
         getWorshipSongs,
         getPraiseSongs,
@@ -477,9 +899,11 @@ export const GlobalProvider = ({ children }) => {
         getTrendingLastMonth,
         songToPreview,
         artistToPreview,
+        sortArtistByTrending,
+        sortArtistAlphabetically,
         // admins
+        register,
         signIn,
-        getSignedInAdmin,
         uploadSong,
         updateSong,
         deleteSong,

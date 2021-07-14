@@ -1,12 +1,20 @@
 import React, { useContext, useState } from 'react';
 import { GlobalContext } from '../../../context/global state/GlobalState';
 import { Header } from '../layouts/Header';
+import marked from 'marked';
 
 export const AddArtist = ({ editing, id }) => {
-  const { uploadArtist, artists, updateArtist } = useContext(GlobalContext);
+  const {
+    uploadArtist,
+    artists,
+    updateArtist,
+    loading,
+    successMessage,
+    errorMessage,
+  } = useContext(GlobalContext);
 
   const artistToEdit = artists.filter((artist) => {
-    return artist.id === id;
+    return artist.name.toLowerCase() === id.toLowerCase(); // recall name was used as the id in server
   });
 
   const [currentLength, setCurrentLength] = useState(0);
@@ -18,19 +26,35 @@ export const AddArtist = ({ editing, id }) => {
     editing ? artistToEdit[0].thumbnail : ''
   );
   const [facebookLink, setFacebookLink] = useState(
-    editing ? artistToEdit[0].facebookLink : ''
+    editing
+      ? artistToEdit[0].facebookLink
+        ? artistToEdit[0].facebookLink
+        : ''
+      : ''
   );
   const [twitterLink, setTwitterLink] = useState(
-    editing ? artistToEdit[0].twitterLink : ''
+    editing
+      ? artistToEdit[0].twitterLink
+        ? artistToEdit[0].twitterLink
+        : ''
+      : ''
   );
   const [kingschatLink, setKingschatLink] = useState(
-    editing ? artistToEdit[0].kingschatLink : ''
+    editing
+      ? artistToEdit[0].kingschatLink
+        ? artistToEdit[0].kingschatLink
+        : ''
+      : ''
   );
   const [instagramLink, setInstagramLink] = useState(
-    editing ? artistToEdit[0].instaLink : ''
+    editing ? (artistToEdit[0].instaLink ? artistToEdit[0].instaLink : '') : ''
   );
   const [youtubeLink, setYoutubeLink] = useState(
-    editing ? artistToEdit[0].youtubeLink : ''
+    editing
+      ? artistToEdit[0].youtubeLink
+        ? artistToEdit[0].youtubeLink
+        : ''
+      : ''
   );
 
   const calculateWords = (e) => {
@@ -45,6 +69,82 @@ export const AddArtist = ({ editing, id }) => {
       setBioValue(e.target.value);
     }
   };
+
+  const formatLineBrk = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = bioValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '<br />');
+
+    setBioValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const formatLink = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = bioValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '[text](#)');
+
+    setBioValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const formatStyle = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = bioValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '**');
+
+    setBioValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const formatWeight = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = bioValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '****');
+
+    setBioValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const getCaretPosition = (field) => {
+    let caretPosition = 0;
+    if (document.selection) {
+      field.focus();
+      const selectionRange = document.selection.createRange();
+      selectionRange.moveStart('character', field.value.length);
+      caretPosition = selectionRange.text.length;
+    } else if (
+      field.selectionStart ||
+      typeof field.selectionStart === 'number'
+    ) {
+      caretPosition =
+        field.selectionDirection === 'backward'
+          ? field.selectionStart
+          : field.selectionEnd;
+    }
+    return caretPosition;
+  };
+
   // upload artist to db
   const submitArtist = (e) => {
     e.preventDefault();
@@ -60,13 +160,13 @@ export const AddArtist = ({ editing, id }) => {
       thumbnail,
     };
 
-    editing ? updateArtist(id, artist) : uploadArtist(artist);
+    editing ? updateArtist(artist) : uploadArtist(artist);
   };
 
   return (
     <div>
       <Header />
-      <main className='admin-artist l'>
+      <main className='admin-main l'>
         <h3 className='page-title artist-title' style={{ margin: '0 30px' }}>
           Add Artist Biography
         </h3>
@@ -178,23 +278,82 @@ export const AddArtist = ({ editing, id }) => {
             value={youtubeLink}
             onChange={(e) => setYoutubeLink(e.target.value)}
           />
-          <label className='label-title'>
-            Artist Bio{' '}
-            <i className='fas fa-info-circle'>
-              <div className='info-content'>
-                <p>A short biography of the artist. Max: 100 words</p>
-              </div>
-            </i>
-          </label>
+
+          <div className='with-helpers'>
+            <label className='label-title'>
+              Artist Bio{' '}
+              <i className='fas fa-info-circle'>
+                <div className='info-content'>
+                  <p>A short biography of the artist. Max: 100 words</p>
+                </div>
+              </i>
+            </label>
+            <div className='helpers'>
+              <p className='format-btn' onClick={formatLineBrk}>
+                Line Break
+              </p>
+              <p className='format-btn' onClick={formatLink}>
+                Link
+              </p>
+              <p className='format-btn' onClick={formatWeight}>
+                Bold
+              </p>
+              <p className='format-btn' onClick={formatStyle}>
+                Italics
+              </p>
+            </div>
+          </div>
           <textarea
             name='intro'
+            id='intro'
             placeholder='Start typing'
             onChange={calculateWords}
             value={bioValue}
             required
           ></textarea>
           <p className='words'>{currentLength} Words</p>
-          <input type='submit' value='Submit Biography' id='submit-song' />
+          <label className='label-title'>
+            Artist Bio Preview{' '}
+            <i className='fas fa-info-circle'>
+              <div className='info-content'>
+                <p>
+                  This is a live preview of the text you write for Artist Bio.
+                </p>
+              </div>
+            </i>
+          </label>
+          <div className='markdown-preview'>
+            <p
+              dangerouslySetInnerHTML={{
+                __html: marked(bioValue ? bioValue : 'Start typing'),
+              }}
+            ></p>
+          </div>
+          <input
+            type='submit'
+            value='Submit Biography'
+            id='submit-bio'
+            value={
+              loading
+                ? 'loading...'
+                : editing
+                ? 'Update Artist Bio'
+                : 'Submit Artist Bio'
+            }
+          />
+          <a className='close-form' href='artists'>
+            Cancel
+          </a>
+          {errorMessage && (
+            <p className='page-title admin artist-title error'>
+              {errorMessage}
+            </p>
+          )}
+          {successMessage && (
+            <p className='page-title admin artist-title success'>
+              {successMessage}
+            </p>
+          )}
         </form>
       </main>
     </div>

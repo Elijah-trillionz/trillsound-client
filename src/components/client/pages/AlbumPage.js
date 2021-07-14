@@ -7,6 +7,7 @@ import { TopSlider } from '../layouts/TopSlider';
 import { BottomSlider } from '../layouts/BottomSlider';
 
 export const AlbumPage = () => {
+  // NOT AVAILABLE FOR NOW
   return (
     <div>
       <Header />

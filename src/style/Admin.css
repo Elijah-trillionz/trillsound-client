@@ -12,7 +12,8 @@
 .admin-login-form {
   border: 1px solid #ccc;
   padding: 15px 22px;
-  min-width: 300px;
+  min-width: 320px;
+  max-width: 320px;
   margin: 20px;
   border-radius: 5px;
 }
@@ -25,6 +26,20 @@
 .page-title.admin i {
   padding-right: 6px;
   font-size: 20px;
+}
+.page-title.error {
+  background-color: tomato;
+  font-variant: none;
+}
+.page-title.success {
+  background-color: #3caf50;
+  font-variant: none;
+}
+.page-title.success.redirect {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
 }
 .admin-login-form label,
 .label-title {
@@ -93,6 +108,10 @@
   background: #22252b;
   color: #fff;
   z-index: 10;
+}
+.admin-header a {
+  color: #fff;
+  text-decoration: none;
 }
 .admin-header .title,
 .header-contents {
@@ -506,7 +525,8 @@
 }
 .posting input,
 .posting textarea,
-.posting select {
+.posting select,
+.markdown-preview {
   border: 1px solid #2196f3;
   border-radius: 5px;
   background-color: rgb(232, 240, 254);
@@ -518,7 +538,8 @@
   margin: 10px 0;
   outline: none;
 }
-.posting textarea {
+.posting textarea,
+.markdown-preview {
   max-width: 100%;
   min-width: 100%;
   min-height: 200px;
@@ -527,10 +548,23 @@
   padding: 10px;
   margin: 10px 0 !important;
   transition: border-color 0.3s;
-  word-spacing: 2px;
+  word-spacing: 1px;
   letter-spacing: 0.7px;
   line-height: 2;
   font-family: sans-serif;
+  overflow-y: scroll;
+}
+.with-helpers {
+  display: flex;
+  justify-content: space-between;
+}
+.format-btn {
+  padding: 4px 7px;
+  border: 2px solid #ccc;
+  display: inline-block;
+  margin: 4px;
+  cursor: pointer;
+  border-radius: 3px;
 }
 .posting input:focus,
 .posting textarea:focus {

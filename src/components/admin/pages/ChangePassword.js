@@ -2,12 +2,14 @@ import React, { useState, useContext } from 'react';
 import { GlobalContext } from '../../../context/global state/GlobalState';
 
 export const ChangePassword = () => {
-  const { changePassword } = useContext(GlobalContext);
+  const { changePassword, successMessage, errorMessage, loading } = useContext(
+    GlobalContext
+  );
 
+  const [oldPasswordValue, setOldPasswordValue] = useState('');
   const [passwordValue, setPasswordValue] = useState('');
   const [confirmPasswordValue, setConfirmPasswordValue] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   const makePasswordVisible = (e) => {
     const password = e.target.parentElement.previousElementSibling;
@@ -26,12 +28,10 @@ export const ChangePassword = () => {
     e.preventDefault();
 
     if (passwordValue !== confirmPasswordValue) {
-      setErrorMsg('Password does not match');
-    } else {
-      changePassword(passwordValue);
-      setErrorMsg('');
-      setSuccessMsg('Password succesfully changed');
+      return setErrorMsg('Password does not match');
     }
+
+    changePassword(oldPasswordValue, passwordValue);
   };
 
   return (
@@ -41,15 +41,16 @@ export const ChangePassword = () => {
           <h3 className='page-title admin artist-title'>
             <i className='fas fa-lock'></i> Change Password
           </h3>
+          {/* save your admin passwords elsewhere */}
           <form onSubmit={submitForm}>
-            <label htmlFor='password'>New Password</label>
+            <label htmlFor='password'>Current Password</label>
             <div className='admin-exp'>
               <input
                 type='password'
                 name='password'
-                value={passwordValue}
-                onChange={(e) => setPasswordValue(e.target.value)}
-                placeholder='Enter password'
+                value={oldPasswordValue}
+                onChange={(e) => setOldPasswordValue(e.target.value)}
+                placeholder='Enter current password'
               />
               <div className='admin-visible'>
                 <i
@@ -58,7 +59,23 @@ export const ChangePassword = () => {
                 ></i>
               </div>
             </div>
-            <label htmlFor='password'>Confirm Password</label>
+            <label htmlFor='password'>New Password</label>
+            <div className='admin-exp'>
+              <input
+                type='password'
+                name='password'
+                value={passwordValue}
+                onChange={(e) => setPasswordValue(e.target.value)}
+                placeholder='Enter new password'
+              />
+              <div className='admin-visible'>
+                <i
+                  className='fas fa-eye-slash'
+                  onClick={makePasswordVisible}
+                ></i>
+              </div>
+            </div>
+            <label htmlFor='password'>Confirm New Password</label>
             <div className='admin-exp'>
               <input
                 type='password'
@@ -75,25 +92,27 @@ export const ChangePassword = () => {
                 ></i>
               </div>
             </div>
-            <input type='submit' name='submit' className='admin-prim-btn' />
-            <p
-              style={{
-                color: `${errorMsg ? 'red' : 'green'}`,
-                textAlign: 'center',
-              }}
-            >
-              {errorMsg ? errorMsg : successMsg}
+            <input
+              type='submit'
+              name='submit'
+              value={loading ? 'loading...' : 'Submit'}
+              className='admin-prim-btn'
+            />
+            <p>
+              Forgot Password? <a href='/add'>Contact Elijah</a>
             </p>
-            {successMsg && (
-              <>
-                <br />
-                <a
-                  href='login'
-                  style={{ display: 'block', textAlign: 'center' }}
-                >
-                  Login with New Password
-                </a>
-              </>
+            {errorMsg && (
+              <p className='page-title admin artist-title error'>{errorMsg}</p>
+            )}
+            {errorMessage && (
+              <p className='page-title admin artist-title error'>
+                {errorMessage}
+              </p>
+            )}
+            {successMessage && (
+              <p className='page-title admin artist-title success'>
+                {successMessage}
+              </p>
             )}
           </form>
         </div>

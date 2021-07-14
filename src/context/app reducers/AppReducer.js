@@ -20,10 +20,32 @@ import {
   ARTIST_TO_PREVIEW,
   SIGNED_IN_ADMIN,
   SET_ERROR_MESSAGE,
+  SET_SUCCESS_MESSAGE,
+  GET_SONGS,
+  GET_ARTISTS,
+  GET_ADMINS,
+  SET_PARENT_LOADING,
+  ARTIST_ALPH_ORDER,
+  TRENDING_ARTIST,
 } from './types';
 
 const AppReducer = (state, action) => {
   switch (action.type) {
+    case GET_SONGS:
+      return {
+        ...state,
+        songs: action.payload,
+      };
+    case GET_ARTISTS:
+      return {
+        ...state,
+        artists: action.payload,
+      };
+    case GET_ADMINS:
+      return {
+        ...state,
+        admins: action.payload,
+      };
     case ALPH_ORDER:
       return {
         ...state,
@@ -38,19 +60,31 @@ const AppReducer = (state, action) => {
           return `${song.numOfDownloads + song.numOfStreams}.${index}`;
         }),
       };
+    case ARTIST_ALPH_ORDER:
+      return {
+        ...state,
+        artistTitles: state.artists.map((artist, index) => {
+          return `${artist.name}.${index}`;
+        }),
+      };
+    case TRENDING_ARTIST:
+      return {
+        ...state,
+        trendingArtists: state.artists.map((artist, index) => {
+          return `${artist.numOfPageViews}.${index}`;
+        }),
+      };
     case NEXT_PAGE:
       return {
         ...state,
         currentPaginationIndex: action.payload,
         newTotalPaginationIndex: action.payload + 16,
-        loading: false,
       };
     case PREV_PAGE:
       return {
         ...state,
         currentPaginationIndex: action.payload - 16,
         newTotalPaginationIndex: action.payload,
-        loading: false,
       };
     case GET_WORSHIP_SONGS:
       return {
@@ -58,7 +92,6 @@ const AppReducer = (state, action) => {
         worshipSongs: state.songs.filter((song) => {
           return song.genre === 'worship';
         }),
-        loading: false,
       };
     case GET_TRENDING_WORSHIP:
       return {
@@ -68,7 +101,6 @@ const AppReducer = (state, action) => {
             worshipSong.numOfDownloads + worshipSong.numOfStreams
           }.${index}`;
         }),
-        loading: false,
       };
     case WORSHIP_ALPH_ORDER:
       return {
@@ -76,7 +108,6 @@ const AppReducer = (state, action) => {
         songTitles: state.worshipSongs.map((worshipSong, index) => {
           return `${worshipSong.title}.${index}`;
         }),
-        loading: false,
       };
     case GET_PRAISE_SONGS:
       return {
@@ -84,7 +115,6 @@ const AppReducer = (state, action) => {
         praiseSongs: state.songs.filter((song) => {
           return song.genre === 'praise';
         }),
-        loading: false,
       };
     case GET_TRENDING_PRAISE:
       return {
@@ -94,7 +124,6 @@ const AppReducer = (state, action) => {
             praiseSong.numOfDownloads + praiseSong.numOfStreams
           }.${index}`;
         }),
-        loading: false,
       };
     case PRAISE_ALPH_ORDER:
       return {
@@ -102,7 +131,6 @@ const AppReducer = (state, action) => {
         songTitles: state.praiseSongs.map((praiseSong, index) => {
           return `${praiseSong.title}.${index}`;
         }),
-        loading: false,
       };
     case GET_RAP_SONGS:
       return {
@@ -110,7 +138,6 @@ const AppReducer = (state, action) => {
         rapSongs: state.songs.filter((song) => {
           return song.genre === 'rap';
         }),
-        loading: false,
       };
     case GET_TRENDING_RAP:
       return {
@@ -118,7 +145,6 @@ const AppReducer = (state, action) => {
         trendingRapSongs: state.rapSongs.map((rapSong, index) => {
           return `${rapSong.numOfDownloads + rapSong.numOfStreams}.${index}`;
         }),
-        loading: false,
       };
     case RAP_ALPH_ORDER:
       return {
@@ -126,20 +152,21 @@ const AppReducer = (state, action) => {
         songTitles: state.rapSongs.map((rapSong, index) => {
           return `${rapSong.title}.${index}`;
         }),
-        loading: false,
       };
     case SEARCH_QUERY:
       return {
         ...state,
-        searchResults: [action.payload],
-        searchQuery: action.payload,
-        loading: false,
+        searchResults:
+          action.payload.src === 'artist'
+            ? checkForQueryInArtists(action.payload.query, state.artists)
+            : checkForQueryInSongs(action.payload.query, state.songs),
+        searchQuery: action.payload.query,
       };
     case GET_LAST_MONTH:
       return {
         ...state,
         fromLastMonth: state.songs.filter((song) => {
-          return !song.date.indexOf(action.payload);
+          return !song.createdAt.indexOf(action.payload);
         }),
       };
     case TRENDING_LAST_MONTH:
@@ -156,7 +183,6 @@ const AppReducer = (state, action) => {
           return song.id === action.payload[0];
         }),
         artistId: action.payload[1],
-        loading: false,
       };
     case ARTIST_TO_PREVIEW:
       return {
@@ -164,34 +190,105 @@ const AppReducer = (state, action) => {
         previewingArtist: state.artists.filter((artist) => {
           return artist.id === action.payload;
         }),
-        loading: false,
       };
     // admins
 
     case SIGNED_IN_ADMIN:
       return {
         ...state,
-        signedInAdmin: state.admins.filter((admin) => {
-          if (admin.id === action.payload) {
-            return admin;
-          } else {
-            return 'error';
-          }
-        }),
+        signedInAdmin: action.payload,
       };
     case SET_LOADING:
       return {
         ...state,
-        loading: true,
+        loading: action.payload,
+      };
+    case SET_PARENT_LOADING:
+      return {
+        ...state,
+        parentLoading: action.payload,
       };
     case SET_ERROR_MESSAGE:
       return {
         ...state,
         errorMessage: action.payload,
       };
+    case SET_SUCCESS_MESSAGE:
+      return {
+        ...state,
+        successMessage: action.payload,
+      };
     default:
       return state;
   }
+};
+
+const checkForQueryInSongs = (query, songs) => {
+  const relatedSongsCheckOne = songs.filter((song) => {
+    return song.title.toLowerCase() === query.toLowerCase();
+  });
+
+  if (relatedSongsCheckOne.length >= 1) {
+    return relatedSongsCheckOne;
+  }
+
+  const songTitles = songs.map((song) => {
+    return song.title.toLowerCase();
+  });
+
+  const relatedSongTitles = songTitles.filter((songTitle) => {
+    return songTitle.indexOf(query.toLowerCase()) !== -1;
+  });
+
+  const relatedSongsCheckTwo = [];
+
+  for (let i = 0; i < songs.length; i++) {
+    for (let j = 0; j < relatedSongTitles.length; j++) {
+      if (relatedSongTitles[j] === songs[i].title.toLowerCase()) {
+        relatedSongsCheckTwo.push(songs[i]);
+      }
+    }
+  }
+
+  if (relatedSongsCheckTwo.length >= 1) {
+    return relatedSongsCheckTwo;
+  }
+
+  return [null];
+};
+
+const checkForQueryInArtists = (query, artists) => {
+  const relatedArtistsCheckOne = artists.filter((artist) => {
+    return artist.name.toLowerCase() === query.toLowerCase();
+  });
+
+  if (relatedArtistsCheckOne.length >= 1) {
+    return relatedArtistsCheckOne;
+  }
+
+  const artistNames = artists.map((artist) => {
+    return artist.name.toLowerCase();
+  });
+
+  const relatedArtistNames = artistNames.filter((artistName) => {
+    return artistName.indexOf(query.toLowerCase()) !== -1;
+  });
+
+  const relatedArtistsCheckTwo = [];
+
+  for (let i = 0; i < artists.length; i++) {
+    for (let j = 0; j < relatedArtistNames.length; j++) {
+      if (relatedArtistNames[j] === artists[i].name.toLowerCase()) {
+        relatedArtistsCheckTwo.push(artists[i]);
+      }
+    }
+  }
+
+  if (relatedArtistsCheckTwo.length >= 1) {
+    return relatedArtistsCheckTwo;
+  }
+
+  return [null];
 };
 
 export default AppReducer;

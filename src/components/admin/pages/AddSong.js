@@ -1,9 +1,17 @@
 import React, { useContext, useState } from 'react';
 import { GlobalContext } from '../../../context/global state/GlobalState';
 import { Header } from '../layouts/Header';
+import marked from 'marked';
 
 export const AddSong = ({ editing, id }) => {
-  const { uploadSong, songs, updateSong } = useContext(GlobalContext);
+  const {
+    uploadSong,
+    songs,
+    updateSong,
+    errorMessage,
+    successMessage,
+    loading,
+  } = useContext(GlobalContext);
 
   const songToEdit = songs.filter((song) => {
     return song.id === id;
@@ -40,6 +48,80 @@ export const AddSong = ({ editing, id }) => {
     }
   };
 
+  const formatLineBrk = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = songIntroValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '<br />');
+
+    setSongIntroValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const formatLink = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = songIntroValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '[text](#)');
+
+    setSongIntroValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const formatStyle = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = songIntroValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '**');
+
+    setSongIntroValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const formatWeight = () => {
+    const textarea = document.getElementById('intro');
+    const caretPosition = getCaretPosition(textarea);
+
+    const currentValueInArr = songIntroValue.split('');
+    const length = currentValueInArr.length;
+    currentValueInArr.splice(caretPosition, 0, '****');
+
+    setSongIntroValue(currentValueInArr.join(''));
+    if (length === caretPosition) {
+      textarea.focus();
+    }
+  };
+
+  const getCaretPosition = (field) => {
+    let caretPosition = 0;
+    if (document.selection) {
+      field.focus();
+      const selectionRange = document.selection.createRange();
+      selectionRange.moveStart('character', field.value.length);
+      caretPosition = selectionRange.text.length;
+    } else if (
+      field.selectionStart ||
+      typeof field.selectionStart === 'number'
+    ) {
+      caretPosition =
+        field.selectionDirection === 'backward'
+          ? field.selectionStart
+          : field.selectionEnd;
+    }
+    return caretPosition;
+  };
   // upload song to database
   const submitSong = (e) => {
     e.preventDefault();
@@ -60,7 +142,7 @@ export const AddSong = ({ editing, id }) => {
       <Header />
       <main className='admin-main l'>
         <h3 className='page-title artist-title' style={{ margin: '0 30px' }}>
-          Add Song
+          {editing ? 'Edit Song' : 'Add Song'}
         </h3>
         <form className='posting' onSubmit={submitSong}>
           <label className='label-title'>
@@ -144,26 +226,81 @@ export const AddSong = ({ editing, id }) => {
             value={downloadLink}
             onChange={(e) => setDownloadLink(e.target.value)}
           />
-          <label className='label-title'>
-            Song Intro{' '}
-            <i className='fas fa-info-circle'>
-              <div className='info-content'>
-                <p>Introduce the song with some texts. Max: 100 words</p>
-              </div>
-            </i>
-          </label>
+          <div className='with-helpers'>
+            <label className='label-title'>
+              Song Intro (Markdown Editor){' '}
+              <i className='fas fa-info-circle'>
+                <div className='info-content'>
+                  <p>
+                    Introduce the song with some texts in Markdown. Max: 100
+                    words
+                  </p>
+                </div>
+              </i>
+            </label>
+            <div className='helpers'>
+              <p className='format-btn' onClick={formatLineBrk}>
+                Line Break
+              </p>
+              <p className='format-btn' onClick={formatLink}>
+                Link
+              </p>
+              <p className='format-btn' onClick={formatWeight}>
+                Bold
+              </p>
+              <p className='format-btn' onClick={formatStyle}>
+                Italics
+              </p>
+            </div>
+          </div>
           <textarea
             name='intro'
             placeholder='Start typing'
+            id='intro'
             onChange={calculateWords}
             value={songIntroValue}
             required
           ></textarea>
           <p className='words'>{currentLength} Words</p>
-          <input type='submit' value='Submit Song' id='submit-song' />
+          <label className='label-title'>
+            Song Intro Preview{' '}
+            <i className='fas fa-info-circle'>
+              <div className='info-content'>
+                <p>
+                  This is a live preview of the text you write for song intro.
+                </p>
+              </div>
+            </i>
+          </label>
+          <div className='markdown-preview'>
+            <p
+              dangerouslySetInnerHTML={{
+                __html: marked(
+                  songIntroValue ? songIntroValue : 'Start typing'
+                ),
+              }}
+            ></p>
+          </div>
+          <input
+            type='submit'
+            value={
+              loading ? 'loading...' : editing ? 'Update Song' : 'Submit Song'
+            }
+            id='submit-song'
+          />
           <a className='close-form' href='songs'>
             Cancel
           </a>
+          {errorMessage && (
+            <p className='page-title admin artist-title error'>
+              {errorMessage}
+            </p>
+          )}
+          {successMessage && (
+            <p className='page-title admin artist-title success'>
+              {successMessage}
+            </p>
+          )}
         </form>
       </main>
     </div>
