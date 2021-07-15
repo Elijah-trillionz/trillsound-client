@@ -271,6 +271,22 @@ export const MainBody = () => {
                       </a>
                     </div>
                   </div>
+                  <div className='telegram-section'>
+                    <h3 className='page-title'>
+                      Want updates of songs like this?
+                    </h3>
+                    <p>
+                      Join our <b>Telegram Channel</b> for free.
+                    </p>
+                    <a
+                      href='https://t.me/joinchat/CWf6e_UWnjQzN2Y0'
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      Join Now
+                      <i className='fab fa-telegram'></i>
+                    </a>
+                  </div>
                   <div className='artist-tags'>
                     <span
                       className='page-title artist-title'

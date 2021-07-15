@@ -49,13 +49,13 @@ export const Footer = () => {
       </div>
       <div className='trill-modal'>
         <div className='email-modal'>
-          <h2>Join Our Newsletter</h2>
+          <h2>Join Our Telegram Channel</h2>
           <p>
             Be The First To Know About New Releases/ Concerts From Your Favorite
             Artists:
           </p>
           <form>
-            <input
+            {/* <input
               type='email'
               name='email'
               id='email'
@@ -65,7 +65,16 @@ export const Footer = () => {
               required
             />
             <input type='submit' name='submit' id='submit' />
-            <p>Join 330,000 Others</p>
+            
+            <p>Join 330,000 Others</p> */}
+            <a
+              href='https://t.me/joinchat/CWf6e_UWnjQzN2Y0'
+              target='_blank'
+              rel='noopener noreferrer'
+            >
+              Join Now
+              <i className='fab fa-telegram'></i>
+            </a>
           </form>
         </div>
       </div>
@@ -95,13 +104,13 @@ export const Footer = () => {
             </ul>
           </div>
           <div className='middle-content'>
-            <h3 className='footer-title'>Join Our Newsletter</h3>
+            <h3 className='footer-title'>Join Our Telegram Channel</h3>
             <p>
-              Be The First To Know About New Releases/ Concerts From Your
-              Favorite Artists:
+              Be The First To Know About New Song Releases From Your Favorite
+              Artists:
             </p>
             <form>
-              <input
+              {/* <input
                 type='email'
                 name='email'
                 id='sub-email'
@@ -110,8 +119,16 @@ export const Footer = () => {
                 onChange={(e) => setEmailValue(e.target.value)}
                 required
               />
-              <input type='submit' name='submit' id='sub-submit' />
-              <p>Join 330,000 Others</p>
+              <input type='submit' name='submit' id='sub-submit' /> */}
+              <a
+                href='https://t.me/joinchat/CWf6e_UWnjQzN2Y0'
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                Join Now
+                <i className='fab fa-telegram'></i>
+              </a>
+              {/* <p>Join Countless Others</p> */}
             </form>
           </div>
           <div className='right-content'>

@@ -1049,6 +1049,41 @@ ul.artist-lists p {
   width: 100%;
 }
 
+.telegram-section {
+  padding: 15px 10px;
+  border: 2px solid #108aee;
+  display: inline-block;
+  margin-bottom: 20px;
+  border-radius: 5px;
+}
+.telegram-section h3 {
+  padding-bottom: 10px;
+  text-align: left;
+  font-weight: 900;
+}
+.telegram-section p {
+  padding: 5px 0;
+  padding-bottom: 15px;
+}
+.telegram-section a {
+  display: block;
+  padding: 11px 20px;
+  margin: 5px 0;
+  border-radius: 4px;
+  background: linear-gradient(-20deg, rgb(10, 130, 130), #7eb3df);
+  border: 1px solid #108aee;
+  color: #fff;
+  text-decoration: transparent underline;
+  transition: text-decoration 0.4s ease-in-out;
+  text-align: center;
+}
+.telegram-section a:hover {
+  text-decoration: #fff underline;
+}
+.telegram-section a i {
+  padding-left: 5px;
+}
+
 /* sort menu */
 .sort-menu {
   position: fixed;
@@ -1220,6 +1255,26 @@ ul.artist-lists p {
   border: 1px solid #108aee;
   border-radius: 0 4px 4px 0;
   text-align: center;
+}
+.middle-content a,
+.email-modal a {
+  display: inline-block;
+  padding: 11px 20px;
+  margin: 15px 0;
+  border-radius: 4px;
+  background-color: #108aee;
+  border: 1px solid #108aee;
+  color: #fff;
+  text-decoration: transparent underline;
+  transition: text-decoration 0.4s ease-in-out;
+}
+.middle-content a:hover,
+.email-modal a:hover {
+  text-decoration: #fff underline;
+}
+.middle-content a i,
+.email-modal a i {
+  padding-left: 5px;
 }
 .right-content {
   padding: 0 20px;
